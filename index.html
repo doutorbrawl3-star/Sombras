@@ -15,25 +15,20 @@
         #player, #bullet, #zombie-bullet { position: absolute; }
         #player { width: 30px; height: 30px; background: red; bottom: 10px; left: 135px; border-radius: 4px; z-index: 3; }
 
-        /* GRUPO DO ZUMBI (Zumbi + Barra juntos) */
+        /* GRUPO DO ZUMBI */
         #zombie-group {
-            position: absolute; width: 60px; height: 55px; /* Largura da barra */
+            position: absolute; width: 60px; height: 55px;
             top: 10px; left: 120px; transition: left 0.2s ease-out;
             display: flex; flex-direction: column; align-items: center;
         }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; position: relative; }
         
-        /* Jaleco de Cientista */
         .scientist-coat::after {
             content: ""; position: absolute; top: 5px; left: 5px; width: 20px; height: 25px;
             background: white; border-radius: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 50% 70%, 30% 100%, 0 100%);
         }
 
-        /* BARRA DE VIDA COLADA NO ZUMBI */
-        #enemyHPContainer { 
-            width: 60px; height: 16px; background: #333; border: 1px solid #000; 
-            margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative;
-        }
+        #enemyHPContainer { width: 60px; height: 16px; background: #333; border: 1px solid #000; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 9px; }
 
@@ -47,7 +42,6 @@
         #attack-button { grid-column: 1 / 4; background: #ff4444; font-size: 18px; }
 
         #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 280px; }
-        .buy-btn { background: #28a745; padding: 5px; font-size: 10px; width: 50px; }
     </style>
 </head>
 <body>
@@ -93,17 +87,17 @@
     <div id="store">
         <h3>🛒 LOJA DE ELITE</h3>
         <table style="width:100%; font-size: 12px;">
-            <tr><td>⚔️ Dano (+1)</td><td>10💰</td><td><button class="buy-btn" onclick="buyDmg()">OK</button></td></tr>
-            <tr><td>🫧 Escudo</td><td>20💰</td><td><button class="buy-btn" onclick="buyShield()">OK</button></td></tr>
-            <tr><td>💊 Vida (+5)</td><td>15💰</td><td><button class="buy-btn" onclick="buyHP()">OK</button></td></tr>
-            <tr><td>⚡ Veloc. Tiro</td><td>30💰</td><td><button class="buy-btn" onclick="buySpeed()">OK</button></td></tr>
+            <tr><td>⚔️ Dano (+1)</td><td>10💰</td><td><button onclick="buyDmg()">OK</button></td></tr>
+            <tr><td>🫧 Escudo</td><td>20💰</td><td><button onclick="buyShield()">OK</button></td></tr>
+            <tr><td>💊 Vida (+5)</td><td>15💰</td><td><button onclick="buyHP()">OK</button></td></tr>
+            <tr><td>⚡ Veloc. Tiro</td><td>30💰</td><td><button onclick="buySpeed()">OK</button></td></tr>
         </table>
         <button onclick="document.getElementById('store').style.display='none'" style="margin-top:10px; width:100%; background:red">FECHAR</button>
     </div>
 
     <script>
         let coins=0, damage=1, wave=1, zombieHP=5, playerHP=10, paused=true, shieldHP=0;
-        let shieldLevel=0, shootSpeed=30;
+        let shieldLevel=0, shootSpeed=30, hitsCounter=0; // Contador de hits
         const shieldColors = ["cyan", "#2ecc71", "#e67e22", "#2980b9", "#8e44ad"];
 
         const player=document.getElementById("player"), zombie=document.getElementById("zombie"), zGroup=document.getElementById("zombie-group"), shield=document.getElementById("shield");
@@ -128,13 +122,14 @@
             if(wave===30) zombie.style.background="repeating-linear-gradient(45deg,#000,#000 5px,#fff 5px,#fff 10px)";
             else if(wave===40) { zombie.style.background="purple"; zombie.classList.add("scientist-coat"); }
             else zombie.style.background="green";
+            hitsCounter = 0; // Reseta contador de hits
             updateBars();
         }
 
         function moveZombie(){ 
             if(paused) return;
-            let n = zGroup.offsetLeft + (Math.random() > 0.5 ? 30 : -30);
-            zGroup.style.left = Math.max(0, Math.min(n, 240)) + "px"; // 240 para não sair da tela com a barra larga
+            let n = zGroup.offsetLeft + (Math.random() > 0.5 ? 60 : -60);
+            zGroup.style.left = Math.max(0, Math.min(n, 240)) + "px";
         }
 
         function shootBullet(){
@@ -143,11 +138,17 @@
             let pos=260;
             let inv = setInterval(()=>{
                 if(paused) return;
-                // Colisão agora checa o grupo do zumbi
-                let zL = zGroup.offsetLeft + 15; // +15 para compensar o centro do zumbi no grupo de 60px
+                let zL = zGroup.offsetLeft + 15;
                 if(pos <= 40 && pos >= 10 && parseInt(bPlayer.style.left)+5 >= zL && parseInt(bPlayer.style.left) <= zL+30){
-                    clearInterval(inv); bPlayer.style.display="none"; zombieHP-=damage;
-                    moveZombie(); 
+                    clearInterval(inv); bPlayer.style.display="none"; 
+                    zombieHP -= damage;
+                    hitsCounter++; // Aumenta o contador de hits
+                    
+                    if(hitsCounter >= 3){ // Só move ao atingir 3 tiros
+                        moveZombie();
+                        hitsCounter = 0;
+                    }
+                    
                     if(zombieHP<=0){ coins+=(wave%10===0?20:5); wave++; resetEnemy(); }
                     updateBars();
                 } else if(pos <= 0){ clearInterval(inv); bPlayer.style.display="none"; }
@@ -184,7 +185,6 @@
         document.getElementById("pause-button").onclick=()=>{ paused=!paused; document.getElementById("pause-button").innerText=paused?"▶️ CONTINUAR":"⏸️ PAUSAR"; };
 
         setInterval(zombieAttack, 2000); 
-        setInterval(() => { if(!paused) moveZombie(); }, 4000); 
     </script>
 </body>
 </html>
