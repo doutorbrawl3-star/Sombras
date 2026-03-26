@@ -6,53 +6,56 @@
     <title>Guerreiro das Sombras</title>
     <style>
         body { background: #000; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; }
+        
+        /* Menu Inicial */
+        #main-menu { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .menu-btn { width: 200px; padding: 15px; margin: 10px; background: #333; border: 2px solid #ff0000; color: white; font-size: 18px; font-weight: bold; border-radius: 10px; }
+
+        /* Estilos do Jogo */
         h1 { font-size: 18px; margin: 5px 0; color: #ff0000; }
         #game-area { width: 300px; height: 300px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; }
         
-        #player, #zombie, #bullet, #zombie-bullet, #chest { position: absolute; transition: background 0.3s; }
+        #player, #zombie, #bullet, #zombie-bullet, #chest { position: absolute; }
         #player, #zombie, #chest { width: 30px; height: 30px; border-radius: 4px; }
-
         #player { background: red; bottom: 10px; left: 135px; z-index: 3; }
         #zombie { background: green; top: 10px; left: 135px; }
+        
+        /* Jaleco de Cientista (Onda 40) */
+        .scientist-coat::after {
+            content: ""; position: absolute; top: 5px; left: 5px; width: 20px; height: 25px;
+            background: white; border-radius: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 50% 70%, 30% 100%, 0 100%);
+        }
+
         #bullet { background: yellow; width: 5px; height: 10px; display: none; z-index: 2; }
         #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; display:none; z-index: 2; }
-        #chest { background: yellow; border-top: 6px solid brown; display: none; }
         
-        #shield { 
-            position: absolute; width: 50px; height: 50px; border-radius: 50%; 
-            left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; 
-        }
+        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; }
 
-        /* Barra do Inimigo */
-        #enemyHPContainer {
-            position: absolute; width: 60px; height: 16px; background: #333;
-            border: 1px solid #000; display: none; border-radius: 3px; overflow: hidden; z-index: 10;
-        }
+        /* Barra de Vida Inimigo */
+        #enemyHPContainer { position: absolute; width: 60px; height: 16px; background: #333; border: 1px solid #000; display: none; border-radius: 3px; overflow: hidden; z-index: 10; }
         #enemyHPFill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
-        #enemyHPText {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            color: black; font-weight: bold; font-size: 9px;
-        }
+        #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 9px; }
 
+        /* HUD e Controles */
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 300px; margin: 10px auto; }
         button { padding: 15px 5px; font-size: 14px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; font-weight: bold; }
         #attack-button { grid-column: 1 / 4; background: #ff4444; font-size: 18px; }
 
-        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 260px; }
-        table { width: 100%; font-size: 12px; border-collapse: collapse; }
-        td { border: 1px solid #444; padding: 5px; }
-        #store-indicator { display: none; position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: orange; border-radius: 50%; }
-        
-        /* Estilo para o Boss Listrado (Onda 30) */
-        .striped-boss {
-            background: repeating-linear-gradient(45deg, #000, #000 5px, #fff 5px, #fff 10px) !important;
-            width: 40px !important; height: 40px !important;
-        }
+        /* Loja */
+        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 280px; max-height: 80vh; overflow-y: auto; }
+        table { width: 100%; font-size: 11px; border-collapse: collapse; }
+        td { border: 1px solid #444; padding: 5px; text-align: left; }
+        .buy-btn { background: #28a745; padding: 5px; font-size: 10px; }
     </style>
 </head>
 <body>
+
+    <div id="main-menu">
+        <h1 style="font-size: 30px;">GUERREIRO DAS SOMBRAS</h1>
+        <button class="menu-btn" onclick="startGame()">JOGAR</button>
+        <button class="menu-btn" onclick="alert('Skins em breve!')">SKINS</button>
+    </div>
 
     <h1>GUERREIRO DAS SOMBRAS</h1>
     <div id="game-area">
@@ -74,42 +77,46 @@
 
     <div class="controls">
         <button id="left-button">⬅️ ESQ</button>
-        <div style="position:relative"><button id="store-button" style="width:100%">🛒 LOJA</button><div id="store-indicator"></div></div>
+        <button id="store-button">🛒 LOJA</button>
         <button id="right-button">DIR ➡️</button>
         <button id="attack-button">🔥 ATACAR</button>
         <button id="pause-button" style="grid-column: 1/4; background: #555;">⏸️ PAUSAR</button>
     </div>
 
     <div id="store">
-        <h3>🛒 LOJA</h3>
+        <h3>🛒 LOJA DE ELITE</h3>
         <table>
-            <tr><td>Dano (+1)</td><td>10💰</td><td><button id="buy-upgrade">OK</button></td></tr>
-            <tr><td>Escudo 🫧</td><td id="shield-price">20💰</td><td><button id="buy-shield">OK</button></td></tr>
+            <tr><td>⚔️ Dano (+1)</td><td>10💰</td><td><button class="buy-btn" id="buy-upgrade">OK</button></td></tr>
+            <tr><td>🫧 Escudo</td><td id="shield-price">20💰</td><td><button class="buy-btn" id="buy-shield">OK</button></td></tr>
+            <tr><td>💊 Vida (+5)</td><td>15💰</td><td><button class="buy-btn" id="buy-hp">OK</button></td></tr>
+            <tr><td>⚡ Veloc. Tiro</td><td>30💰</td><td><button class="buy-btn" id="buy-speed">OK</button></td></tr>
+            <tr><td>❄️ Gelo (Lento)</td><td>50💰</td><td><button class="buy-btn" id="buy-ice">OK</button></td></tr>
+            <tr><td>💣 Granada</td><td>40💰</td><td><button class="buy-btn" id="buy-bomb">OK</button></td></tr>
         </table>
-        <button id="close-store" style="margin-top:10px; width:100%; background:red">FECHAR</button>
+        <button onclick="document.getElementById('store').style.display='none'" style="margin-top:10px; width:100%; background:red">FECHAR</button>
     </div>
 
     <script>
-        let coins=0, damage=1, wave=1, zombieHP=5, playerHP=10, paused=false, chestHP=32, shieldHP=0;
-        let shieldLevel=0, shieldCost=20, hitsOnZombie=0;
+        let coins=0, damage=1, wave=1, zombieHP=5, playerHP=10, paused=true, shieldHP=0;
+        let shieldLevel=0, shieldCost=20, shootSpeed=30, iceEffect=false;
         const shieldColors = ["cyan", "#2ecc71", "#e67e22", "#2980b9", "#8e44ad"];
 
-        const player=document.getElementById("player"), shield=document.getElementById("shield"), zombie=document.getElementById("zombie");
-        const chest=document.getElementById("chest"), bullet=document.getElementById("bullet"), zombieBullet=document.getElementById("zombie-bullet");
+        const player=document.getElementById("player"), zombie=document.getElementById("zombie"), shield=document.getElementById("shield");
+
+        function startGame() { document.getElementById('main-menu').style.display = 'none'; paused = false; resetEnemy(); }
 
         function updateBars(){
             document.getElementById("vida").textContent=playerHP;
-            let currentHP, maxHP, enemy;
-            if(wave===15){ currentHP=chestHP; maxHP=32; enemy=chest; }
-            else { currentHP=zombieHP; maxHP=getZombieMaxHP(); enemy=zombie; }
+            let currentHP = (wave===15) ? chestHP : zombieHP;
+            let maxHP = (wave===15) ? 32 : getZombieMaxHP();
+            let enemy = (wave===15) ? document.getElementById("chest") : zombie;
             
             const container = document.getElementById("enemyHPContainer");
             container.style.display="block";
-            container.style.top=(enemy.offsetTop + enemy.offsetHeight + 5) + "px";
-            container.style.left=(enemy.offsetLeft + (enemy.offsetWidth/2) - 30) + "px";
+            container.style.top=(enemy.offsetTop + 35) + "px";
+            container.style.left=(enemy.offsetLeft - 15) + "px";
             
-            let percent=Math.max(0, (currentHP/maxHP)*100);
-            document.getElementById("enemyHPFill").style.width=percent+"%";
+            document.getElementById("enemyHPFill").style.width=Math.max(0, (currentHP/maxHP)*100)+"%";
             document.getElementById("enemyHPText").textContent=currentHP + " HP";
         }
 
@@ -120,94 +127,56 @@
         }
 
         function resetEnemy(){
-            zombie.className = ""; zombie.style.width = "30px"; zombie.style.height = "30px";
-            if(wave===15) { chest.style.display="block"; zombie.style.display="none"; chestHP=32; }
-            else {
-                chest.style.display="none"; zombie.style.display="block";
-                zombieHP = getZombieMaxHP();
-                if(wave===30) { zombie.classList.add("striped-boss"); }
-                else if(wave===40) { zombie.style.background = "purple"; }
-                else if(wave===60) { zombie.style.background = "#222"; zombie.style.width="45px"; zombie.style.height="45px"; }
-                else if(wave===90) { zombie.style.background = "black"; zombie.style.boxShadow = "0 0 15px red"; }
-                else { zombie.style.background = "green"; }
-            }
+            zombie.className = ""; zombie.style.width="30px"; zombie.style.height="30px";
+            zombieHP = getZombieMaxHP();
+            if(wave===30) { zombie.style.background="repeating-linear-gradient(45deg,#000,#000 5px,#fff 5px,#fff 10px)"; }
+            else if(wave===40) { zombie.style.background="purple"; zombie.classList.add("scientist-coat"); }
+            else { zombie.style.background="green"; }
             updateBars();
-        }
-
-        function attackEnemy(){
-            if(wave===15){ chestHP -= damage; if(chestHP<=0){ coins+=15; wave++; resetEnemy(); } }
-            else { zombieHP -= damage; hitsOnZombie++; 
-                if(hitsOnZombie >= (wave >= 30 ? 6 : 3)){ moveZombie(); hitsOnZombie=0; }
-                if(zombieHP<=0){ coins += (wave%10==0 ? 50 : 5); wave++; resetEnemy(); }
-            }
-            document.getElementById("coins").textContent=coins;
-            document.getElementById("wave").textContent=wave;
-            updateBars(); updateStoreIndicator();
         }
 
         function shootBullet(){
             if(paused) return;
-            bullet.style.display="block"; bullet.style.left=player.offsetLeft+12+"px"; bullet.style.top="260px";
+            const b = document.getElementById("bullet");
+            b.style.display="block"; b.style.left=player.offsetLeft+12+"px"; b.style.top="260px";
             let pos=260;
             const interval=setInterval(()=>{
                 if(paused) return;
-                let enemy = (wave===15) ? chest : zombie;
-                if(pos <= enemy.offsetTop+enemy.offsetHeight && pos >= enemy.offsetTop && parseInt(bullet.style.left)+5 >= enemy.offsetLeft && parseInt(bullet.style.left) <= enemy.offsetLeft+enemy.offsetWidth){
-                    clearInterval(interval); bullet.style.display="none"; attackEnemy();
-                } else if(pos <= 0){ clearInterval(interval); bullet.style.display="none"; }
-                else { pos-=15; bullet.style.top=pos+"px"; }
-            }, 30);
+                if(pos <= zombie.offsetTop+30 && pos >= zombie.offsetTop && parseInt(b.style.left)+5 >= zombie.offsetLeft && parseInt(b.style.left) <= zombie.offsetLeft+30){
+                    clearInterval(interval); b.style.display="none"; 
+                    zombieHP -= damage; if(zombieHP<=0){ coins+=5; wave++; resetEnemy(); }
+                    document.getElementById("coins").textContent=coins; document.getElementById("wave").textContent=wave;
+                    updateBars();
+                } else if(pos <= 0){ clearInterval(interval); b.style.display="none"; }
+                else { pos-=15; b.style.top=pos+"px"; }
+            }, shootSpeed);
         }
 
-        function shootZombieBullet(){
-            if(paused || wave===15) return;
-            zombieBullet.style.display="block"; zombieBullet.style.left=zombie.offsetLeft+(zombie.offsetWidth/2)-5+"px"; zombieBullet.style.top="30px";
-            let pos=30;
-            const interval=setInterval(()=>{
-                if(paused) return;
-                if(pos>=270 && parseInt(zombieBullet.style.left)+10 > player.offsetLeft && parseInt(zombieBullet.style.left) < player.offsetLeft+30){
-                    clearInterval(interval); zombieBullet.style.display="none";
-                    if(shieldHP>0){ shieldHP--; if(shieldHP<=0) shield.style.display="none"; }
-                    else { playerHP--; if(playerHP<=0){ alert("FIM DE JOGO!"); location.reload(); } }
-                    updateBars(); return;
-                }
-                if(pos>=300){ clearInterval(interval); zombieBullet.style.display="none"; return; }
-                pos += (wave >= 90 ? 15 : 10); zombieBullet.style.top=pos+"px";
-            }, 60);
-        }
-
-        function moveZombie(){
-            let newLeft=zombie.offsetLeft+(Math.random()>0.5?30:-30);
-            zombie.style.left=Math.max(0,Math.min(newLeft,300-zombie.offsetWidth))+"px";
-            updateBars();
-        }
-
-        function updateStoreIndicator(){ document.getElementById("store-indicator").style.display=(coins>=10)?"block":"none"; }
-
-        document.getElementById("attack-button").onclick=shootBullet;
-        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; }};
-        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; }};
-        document.getElementById("store-button").onclick=()=>store.style.display="block";
-        document.getElementById("close-store").onclick=()=>store.style.display="none";
-        document.getElementById("buy-upgrade").onclick=()=>{ if(coins>=10){ coins-=10; damage++; document.getElementById("damage").textContent=damage; document.getElementById("coins").textContent=coins; updateStoreIndicator(); }};
-        
+        // Eventos Loja
+        document.getElementById("store-button").onclick=()=> document.getElementById("store").style.display="block";
+        document.getElementById("buy-upgrade").onclick=()=>{ if(coins>=10){ coins-=10; damage++; updateStats(); }};
+        document.getElementById("buy-hp").onclick=()=>{ if(coins>=15){ coins-=15; playerHP+=5; updateStats(); }};
+        document.getElementById("buy-speed").onclick=()=>{ if(coins>=30){ coins-=30; shootSpeed=Math.max(10, shootSpeed-5); updateStats(); }};
         document.getElementById("buy-shield").onclick=()=>{
-            if(coins >= shieldCost){
-                coins -= shieldCost;
-                shieldLevel++;
-                shieldHP = shieldLevel * 3; // Cada nível aguenta 3 hits
-                shield.style.display = "block";
-                shield.style.borderColor = shieldColors[Math.min(shieldLevel-1, shieldColors.length-1)];
-                shieldCost += 20;
-                document.getElementById("shield-price").textContent = shieldCost + "💰";
-                document.getElementById("coins").textContent = coins;
-                store.style.display = "none";
+            if(coins>=shieldCost){
+                coins-=shieldCost; shieldLevel++; shieldHP=shieldLevel*3;
+                shield.style.display="block"; shield.style.borderColor=shieldColors[Math.min(shieldLevel-1,4)];
+                shieldCost+=20; updateStats();
             }
         };
 
-        document.getElementById("pause-button").onclick=()=>{ paused=!paused; document.getElementById("pause-button").innerText = paused ? "▶️ CONTINUAR" : "⏸️ PAUSAR"; };
-        setInterval(shootZombieBullet, 2000);
-        resetEnemy(); updateBars();
+        function updateStats(){
+            document.getElementById("coins").textContent=coins;
+            document.getElementById("damage").textContent=damage;
+            updateBars();
+        }
+
+        document.getElementById("attack-button").onclick=shootBullet;
+        document.getElementById("left-button").onclick=()=>{ if(!paused) player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; };
+        document.getElementById("right-button").onclick=()=>{ if(!paused) player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; };
+        document.getElementById("pause-button").onclick=()=>{ paused=!paused; };
+
+        resetEnemy();
     </script>
 </body>
 </html>
