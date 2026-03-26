@@ -12,28 +12,34 @@
         h1 { font-size: 18px; margin: 5px 0; color: #ff0000; }
         #game-area { width: 300px; height: 300px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; }
         
-        #player, #zombie, #bullet, #zombie-bullet { position: absolute; }
-        #player, #zombie { width: 30px; height: 30px; border-radius: 4px; }
-        #player { background: red; bottom: 10px; left: 135px; z-index: 3; }
-        #zombie { background: green; top: 10px; left: 135px; transition: left 0.2s ease-out; }
+        #player, #bullet, #zombie-bullet { position: absolute; }
+        #player { width: 30px; height: 30px; background: red; bottom: 10px; left: 135px; border-radius: 4px; z-index: 3; }
+
+        /* GRUPO DO ZUMBI (Zumbi + Barra juntos) */
+        #zombie-group {
+            position: absolute; width: 60px; height: 55px; /* Largura da barra */
+            top: 10px; left: 120px; transition: left 0.2s ease-out;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; position: relative; }
         
+        /* Jaleco de Cientista */
         .scientist-coat::after {
             content: ""; position: absolute; top: 5px; left: 5px; width: 20px; height: 25px;
             background: white; border-radius: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 50% 70%, 30% 100%, 0 100%);
         }
 
-        #bullet { background: yellow; width: 6px; height: 12px; display: none; z-index: 2; }
-        #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; display:none; z-index: 2; }
-        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; pointer-events: none; }
-
-        /* BARRA DE HP CORRIGIDA */
+        /* BARRA DE VIDA COLADA NO ZUMBI */
         #enemyHPContainer { 
-            position: absolute; width: 60px; height: 16px; background: #333; border: 1px solid #000; 
-            display: none; border-radius: 3px; overflow: hidden; z-index: 10;
-            transition: left 0.2s ease-out; /* Segue o zumbi suavemente */
+            width: 60px; height: 16px; background: #333; border: 1px solid #000; 
+            margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative;
         }
         #enemyHPFill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 9px; }
+
+        #bullet { background: yellow; width: 6px; height: 12px; display: none; z-index: 2; }
+        #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; display:none; z-index: 2; }
+        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; pointer-events: none; }
 
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 300px; margin: 10px auto; }
@@ -56,8 +62,15 @@
     <div id="game-area">
         <div id="player"></div>
         <div id="shield"></div>
-        <div id="zombie"></div>
-        <div id="enemyHPContainer"><div id="enemyHPFill"></div><div id="enemyHPText">0 HP</div></div>
+        
+        <div id="zombie-group">
+            <div id="zombie"></div>
+            <div id="enemyHPContainer">
+                <div id="enemyHPFill"></div>
+                <div id="enemyHPText">0 HP</div>
+            </div>
+        </div>
+
         <div id="bullet"></div>
         <div id="zombie-bullet"></div>
     </div>
@@ -93,7 +106,7 @@
         let shieldLevel=0, shootSpeed=30;
         const shieldColors = ["cyan", "#2ecc71", "#e67e22", "#2980b9", "#8e44ad"];
 
-        const player=document.getElementById("player"), zombie=document.getElementById("zombie"), shield=document.getElementById("shield");
+        const player=document.getElementById("player"), zombie=document.getElementById("zombie"), zGroup=document.getElementById("zombie-group"), shield=document.getElementById("shield");
         const bPlayer=document.getElementById("bullet"), bZombie=document.getElementById("zombie-bullet");
 
         function startGame() { document.getElementById('main-menu').style.display = 'none'; paused = false; resetEnemy(); }
@@ -105,13 +118,6 @@
             document.getElementById("damage").textContent=damage;
 
             let maxHP = (wave===30)?100 : (wave===40)?150 : 5+wave*2;
-            const container = document.getElementById("enemyHPContainer");
-            container.style.display="block";
-            
-            // Centraliza a barra embaixo do zumbi (Zumbi tem 30px, Barra tem 60px)
-            container.style.top = (zombie.offsetTop + 35) + "px";
-            container.style.left = (zombie.offsetLeft - 15) + "px"; 
-            
             document.getElementById("enemyHPFill").style.width=Math.max(0, (zombieHP/maxHP)*100)+"%";
             document.getElementById("enemyHPText").textContent=zombieHP + " HP";
         }
@@ -127,11 +133,8 @@
 
         function moveZombie(){ 
             if(paused) return;
-            // Movimento lateral em blocos de 30px para ficar alinhado
-            let n = zombie.offsetLeft + (Math.random() > 0.5 ? 30 : -30);
-            zombie.style.left = Math.max(0, Math.min(n, 270)) + "px";
-            // Força a barra a atualizar a posição IMEDIATAMENTE
-            setTimeout(updateBars, 50); 
+            let n = zGroup.offsetLeft + (Math.random() > 0.5 ? 30 : -30);
+            zGroup.style.left = Math.max(0, Math.min(n, 240)) + "px"; // 240 para não sair da tela com a barra larga
         }
 
         function shootBullet(){
@@ -140,7 +143,8 @@
             let pos=260;
             let inv = setInterval(()=>{
                 if(paused) return;
-                let zL = zombie.offsetLeft;
+                // Colisão agora checa o grupo do zumbi
+                let zL = zGroup.offsetLeft + 15; // +15 para compensar o centro do zumbi no grupo de 60px
                 if(pos <= 40 && pos >= 10 && parseInt(bPlayer.style.left)+5 >= zL && parseInt(bPlayer.style.left) <= zL+30){
                     clearInterval(inv); bPlayer.style.display="none"; zombieHP-=damage;
                     moveZombie(); 
@@ -153,7 +157,7 @@
 
         function zombieAttack(){
             if(paused || bZombie.style.display==="block") return;
-            bZombie.style.display="block"; bZombie.style.left=(zombie.offsetLeft+10)+"px"; bZombie.style.top="40px";
+            bZombie.style.display="block"; bZombie.style.left=(zGroup.offsetLeft+25)+"px"; bZombie.style.top="40px";
             let pos=40;
             let inv = setInterval(()=>{
                 if(paused) return;
