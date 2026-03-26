@@ -15,7 +15,6 @@
     <title>Guerreiro das Sombras</title>
 
     <style>
-        /* CSS Unificado (com ajustes para mobile) */
         body { 
             background: #000; 
             color: white; 
@@ -23,8 +22,8 @@
             text-align: center; 
             margin: 0; 
             padding: 0; 
-            overflow: hidden; /* Evita rolar a tela no celular */
-            user-select: none; /* Evita selecionar texto ao clicar rápido */
+            overflow: hidden; 
+            user-select: none; 
         }
 
         h1 { font-size: 18px; margin: 5px 0; color: #ff0000; }
@@ -43,16 +42,43 @@
         #player, #zombie, #bullet, #zombie-bullet, #chest { position: absolute; }
         #player, #zombie, #chest { width: 30px; height: 30px; }
 
-        #player { background: red; bottom: 0; left: 135px; border-radius: 4px; z-index: 3; }
-        #zombie { background: green; top: 0; left: 135px; border-radius: 4px; }
+        #player { background: red; bottom: 10px; left: 135px; border-radius: 4px; z-index: 3; }
+        #zombie { background: green; top: 10px; left: 135px; border-radius: 4px; }
         
         #bullet { background: yellow; z-index: 2; width: 5px; height: 10px; display: none; }
         #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; z-index: 2; display:none; }
 
         #chest { background: yellow; border-top: 6px solid brown; border-radius: 4px; display: none; }
+        
         #shield { 
             position: absolute; width: 50px; height: 50px; border-radius: 50%; 
-            left: 125px; bottom: -10px; z-index: 1; display: none; border: 2px solid cyan; 
+            left: 125px; bottom: 0px; z-index: 1; display: none; border: 2px solid cyan; 
+        }
+
+        /* Barra de Vida do Zumbi (Pequena e Verde) */
+        #enemyHPContainer {
+            position: absolute; 
+            width: 60px; 
+            height: 16px; 
+            background: #333;
+            border: 1px solid #000; 
+            display: none; 
+            border-radius: 3px;
+            overflow: hidden;
+            z-index: 10;
+        }
+        #enemyHPFill { 
+            height: 100%; 
+            background: #00ff00; 
+            width: 100%;
+            transition: width 0.2s ease-out;
+        }
+        #enemyHPText {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            color: black; font-weight: bold; font-size: 9px;
+            pointer-events: none;
         }
 
         /* Status */
@@ -65,7 +91,7 @@
             font-size: 12px;
         }
 
-        /* Controles do Celular */
+        /* Controles */
         .controls { 
             display: grid; 
             grid-template-columns: 1fr 1fr 1fr; 
@@ -84,19 +110,8 @@
             font-weight: bold;
         }
 
-        #attack-button { 
-            grid-column: 1 / 4; 
-            background: #ff4444; 
-            font-size: 18px; 
-        }
-
-        /* Loja e Barras */
-        #enemyHPContainer {
-            position: absolute; width: 60px; height: 12px; background: #444;
-            border: 1px solid white; display: none; font-size: 10px;
-        }
-        #enemyHPFill { height: 100%; background: lime; color: black; font-weight: bold; }
-        #player-health-bar { height: 5px; position: absolute; background: red; bottom: -8px; width: 30px; }
+        #attack-button { grid-column: 1 / 4; background: #ff4444; font-size: 18px; }
+        #player-health-bar { height: 4px; position: absolute; background: red; bottom: -8px; width: 30px; }
 
         #store {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -120,7 +135,12 @@
         <div id="shield"></div>
         <div id="zombie"></div>
         <div id="chest"></div>
-        <div id="enemyHPContainer"><div id="enemyHPFill">HP: 0</div></div>
+        
+        <div id="enemyHPContainer">
+            <div id="enemyHPFill"></div>
+            <div id="enemyHPText">0 HP</div>
+        </div>
+
         <div id="bullet"></div>
         <div id="zombie-bullet"></div>
     </div>
@@ -143,24 +163,6 @@
         <button id="pause-button" style="grid-column: 1/4; background: #555;">⏸️ PAUSAR</button>
     </div>
 
-
-
-
-<div style="width: 200px; height: 25px; background: #222; border: 2px solid #000; border-radius: 5px; position: relative; overflow: hidden; font-family: 'Arial', sans-serif;">
-    
-    <div id="zombie-hp-bar" style="width: 100%; height: 100%; background: linear-gradient(to bottom, #2ecc71, #27ae60); transition: width 0.2s;"></div>
-    
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px #000;">
-        <span id="zombie-hp-num">100</span> / 100
-    </div>
-</div>
-
-
-
-
-
-
-
     <div id="store">
         <h3 style="margin:0 0 10px 0">🛒 LOJA DE UPGRADES</h3>
         <table>
@@ -173,7 +175,6 @@
     <audio id="shoot-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
     <script>
-        /* JavaScript Unificado e Adaptado */
         let coins=0, damage=1, wave=1;
         let zombieHP=5, playerHP=10, paused=false, chestHP=32, shieldHP=0;
         let shieldLevel=1, shieldCost=20, hitsOnZombie=0;
@@ -184,24 +185,30 @@
         const chest=document.getElementById("chest");
         const bullet=document.getElementById("bullet");
         const zombieBullet=document.getElementById("zombie-bullet");
-        const playerBar=document.getElementById("player-health-bar");
         const store=document.getElementById("store");
 
         function updateBars(){
+            // Vida do Jogador
             document.getElementById("player-health-bar").style.width=(playerHP/10*30)+"px";
             document.getElementById("vida").textContent=playerHP;
+
+            // Vida do Inimigo (Zumbi ou Baú)
             let currentHP, maxHP, enemy;
             if(wave===15){ currentHP=chestHP; maxHP=32; enemy=chest; }
             else { currentHP=zombieHP; maxHP=5+wave*2; enemy=zombie; }
             
             const container = document.getElementById("enemyHPContainer");
+            const fill = document.getElementById("enemyHPFill");
+            const text = document.getElementById("enemyHPText");
+
             container.style.display="block";
-            container.style.top=(enemy.offsetTop - 15) + "px";
-            container.style.left=enemy.offsetLeft + "px";
+            // Posiciona a barra exatamente embaixo do inimigo
+            container.style.top=(enemy.offsetTop + 35) + "px";
+            container.style.left=(enemy.offsetLeft - 15) + "px";
             
             let percent=Math.max(0, (currentHP/maxHP)*100);
-            document.getElementById("enemyHPFill").style.width=percent+"%";
-            document.getElementById("enemyHPFill").textContent=currentHP;
+            fill.style.width=percent+"%";
+            text.textContent=currentHP + " HP";
         }
 
         function updateStoreIndicator(){
@@ -228,8 +235,8 @@
             document.getElementById("shoot-sound").play();
             bullet.style.display="block";
             bullet.style.left=player.offsetLeft+12+"px";
-            bullet.style.top="270px";
-            let pos=270;
+            bullet.style.top="260px";
+            let pos=260;
             const interval=setInterval(()=>{
                 if(paused) return;
                 let enemy = (wave===15) ? chest : zombie;
@@ -248,7 +255,7 @@
             let pos=30;
             const interval=setInterval(()=>{
                 if(paused) return;
-                if(pos>=270 && parseInt(zombieBullet.style.left)+10 > player.offsetLeft && parseInt(zombieBullet.style.left) < player.offsetLeft+30){
+                if(pos>=260 && parseInt(zombieBullet.style.left)+10 > player.offsetLeft && parseInt(zombieBullet.style.left) < player.offsetLeft+30){
                     clearInterval(interval); zombieBullet.style.display="none";
                     if(shieldHP>0){ shieldHP--; if(shieldHP<=0) shield.style.display="none"; }
                     else { playerHP--; if(playerHP<=0){ alert("FIM DE JOGO!"); location.reload(); } }
@@ -262,6 +269,7 @@
         function moveZombie(){
             let newLeft=zombie.offsetLeft+(Math.random()>0.5?30:-30);
             zombie.style.left=Math.max(0,Math.min(newLeft,270))+"px";
+            updateBars(); // Atualiza a posição da barra junto com o zumbi
         }
 
         function resetEnemy(){
@@ -271,10 +279,9 @@
             updateBars();
         }
 
-        // Eventos dos botões
         document.getElementById("attack-button").onclick=shootBullet;
-        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; }};
-        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; }};
+        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; updateBars(); }};
+        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; updateBars(); }};
         document.getElementById("store-button").onclick=()=>store.style.display="block";
         document.getElementById("close-store").onclick=()=>store.style.display="none";
 
@@ -292,10 +299,8 @@
 
         document.getElementById("pause-button").onclick=()=>{ paused=!paused; document.getElementById("pause-button").innerText = paused ? "▶️ CONTINUAR" : "⏸️ PAUSAR"; };
         
-        // Iniciar loops
         setInterval(shootZombieBullet, 2000);
         resetEnemy(); updateBars(); updateStoreIndicator();
     </script>
 </body>
-  </html>
-                                                                 
+</html>
