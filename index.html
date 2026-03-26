@@ -3,144 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <link rel="icon" type="image/jpeg" href="bico.jpg">
-    <link rel="apple-touch-icon" href="bico.jpg">
-    <link rel="manifest" href="manifest.json">
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000"> 
-
     <title>Guerreiro das Sombras</title>
-
     <style>
-        body { 
-            background: #000; 
-            color: white; 
-            font-family: sans-serif; 
-            text-align: center; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            user-select: none; 
-        }
-
+        body { background: #000; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; }
         h1 { font-size: 18px; margin: 5px 0; color: #ff0000; }
-
-        #game-area { 
-            width: 300px; 
-            height: 300px; 
-            background: #111; 
-            margin: 10px auto; 
-            position: relative; 
-            overflow: hidden; 
-            border: 2px solid #333;
-            border-radius: 8px;
-        }
-
-        #player, #zombie, #bullet, #zombie-bullet, #chest { position: absolute; }
-        #player, #zombie, #chest { width: 30px; height: 30px; }
-
-        #player { background: red; bottom: 10px; left: 135px; border-radius: 4px; z-index: 3; }
-        #zombie { background: green; top: 10px; left: 135px; border-radius: 4px; }
+        #game-area { width: 300px; height: 300px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; }
         
-        #bullet { background: yellow; z-index: 2; width: 5px; height: 10px; display: none; }
-        #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; z-index: 2; display:none; }
+        #player, #zombie, #bullet, #zombie-bullet, #chest { position: absolute; transition: background 0.3s; }
+        #player, #zombie, #chest { width: 30px; height: 30px; border-radius: 4px; }
 
-        #chest { background: yellow; border-top: 6px solid brown; border-radius: 4px; display: none; }
+        #player { background: red; bottom: 10px; left: 135px; z-index: 3; }
+        #zombie { background: green; top: 10px; left: 135px; }
+        #bullet { background: yellow; width: 5px; height: 10px; display: none; z-index: 2; }
+        #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; display:none; z-index: 2; }
+        #chest { background: yellow; border-top: 6px solid brown; display: none; }
         
         #shield { 
             position: absolute; width: 50px; height: 50px; border-radius: 50%; 
-            left: 125px; bottom: 0px; z-index: 1; display: none; border: 2px solid cyan; 
+            left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; 
         }
 
-        /* Barra de Vida do Zumbi (Pequena e Verde) */
+        /* Barra do Inimigo */
         #enemyHPContainer {
-            position: absolute; 
-            width: 60px; 
-            height: 16px; 
-            background: #333;
-            border: 1px solid #000; 
-            display: none; 
-            border-radius: 3px;
-            overflow: hidden;
-            z-index: 10;
+            position: absolute; width: 60px; height: 16px; background: #333;
+            border: 1px solid #000; display: none; border-radius: 3px; overflow: hidden; z-index: 10;
         }
-        #enemyHPFill { 
-            height: 100%; 
-            background: #00ff00; 
-            width: 100%;
-            transition: width 0.2s ease-out;
-        }
+        #enemyHPFill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
         #enemyHPText {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             color: black; font-weight: bold; font-size: 9px;
-            pointer-events: none;
         }
 
-        /* Status */
-        .status-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 5px; 
-            width: 300px; 
-            margin: 0 auto; 
-            font-size: 12px;
-        }
-
-        /* Controles */
-        .controls { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1fr; 
-            gap: 10px; 
-            width: 300px; 
-            margin: 10px auto;
-        }
-
-        button { 
-            padding: 15px 5px; 
-            font-size: 14px; 
-            background: #333; 
-            color: white; 
-            border: 1px solid #555; 
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 300px; margin: 10px auto; }
+        button { padding: 15px 5px; font-size: 14px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; font-weight: bold; }
         #attack-button { grid-column: 1 / 4; background: #ff4444; font-size: 18px; }
-        #player-health-bar { height: 4px; position: absolute; background: red; bottom: -8px; width: 30px; }
 
-        #store {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 260px;
-        }
+        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 260px; }
         table { width: 100%; font-size: 12px; border-collapse: collapse; }
-        th, td { border: 1px solid #444; padding: 5px; }
+        td { border: 1px solid #444; padding: 5px; }
+        #store-indicator { display: none; position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: orange; border-radius: 50%; }
         
-        #store-indicator { 
-            display: none; position: absolute; top: -5px; right: -5px;
-            width: 12px; height: 12px; background: orange; border-radius: 50%; 
+        /* Estilo para o Boss Listrado (Onda 30) */
+        .striped-boss {
+            background: repeating-linear-gradient(45deg, #000, #000 5px, #fff 5px, #fff 10px) !important;
+            width: 40px !important; height: 40px !important;
         }
     </style>
 </head>
 <body>
 
     <h1>GUERREIRO DAS SOMBRAS</h1>
-    
     <div id="game-area">
-        <div id="player"><div id="player-health-bar"></div></div>
+        <div id="player"></div>
         <div id="shield"></div>
         <div id="zombie"></div>
         <div id="chest"></div>
-        
-        <div id="enemyHPContainer">
-            <div id="enemyHPFill"></div>
-            <div id="enemyHPText">0 HP</div>
-        </div>
-
+        <div id="enemyHPContainer"><div id="enemyHPFill"></div><div id="enemyHPText">0 HP</div></div>
         <div id="bullet"></div>
         <div id="zombie-bullet"></div>
     </div>
@@ -154,17 +74,14 @@
 
     <div class="controls">
         <button id="left-button">⬅️ ESQ</button>
-        <div style="position:relative">
-            <button id="store-button" style="width:100%">🛒 LOJA</button>
-            <div id="store-indicator"></div>
-        </div>
+        <div style="position:relative"><button id="store-button" style="width:100%">🛒 LOJA</button><div id="store-indicator"></div></div>
         <button id="right-button">DIR ➡️</button>
         <button id="attack-button">🔥 ATACAR</button>
         <button id="pause-button" style="grid-column: 1/4; background: #555;">⏸️ PAUSAR</button>
     </div>
 
     <div id="store">
-        <h3 style="margin:0 0 10px 0">🛒 LOJA DE UPGRADES</h3>
+        <h3>🛒 LOJA</h3>
         <table>
             <tr><td>Dano (+1)</td><td>10💰</td><td><button id="buy-upgrade">OK</button></td></tr>
             <tr><td>Escudo 🫧</td><td id="shield-price">20💰</td><td><button id="buy-shield">OK</button></td></tr>
@@ -172,58 +89,56 @@
         <button id="close-store" style="margin-top:10px; width:100%; background:red">FECHAR</button>
     </div>
 
-    <audio id="shoot-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
-
     <script>
-        let coins=0, damage=1, wave=1;
-        let zombieHP=5, playerHP=10, paused=false, chestHP=32, shieldHP=0;
-        let shieldLevel=1, shieldCost=20, hitsOnZombie=0;
+        let coins=0, damage=1, wave=1, zombieHP=5, playerHP=10, paused=false, chestHP=32, shieldHP=0;
+        let shieldLevel=0, shieldCost=20, hitsOnZombie=0;
+        const shieldColors = ["cyan", "#2ecc71", "#e67e22", "#2980b9", "#8e44ad"];
 
-        const player=document.getElementById("player");
-        const shield=document.getElementById("shield");
-        const zombie=document.getElementById("zombie");
-        const chest=document.getElementById("chest");
-        const bullet=document.getElementById("bullet");
-        const zombieBullet=document.getElementById("zombie-bullet");
-        const store=document.getElementById("store");
+        const player=document.getElementById("player"), shield=document.getElementById("shield"), zombie=document.getElementById("zombie");
+        const chest=document.getElementById("chest"), bullet=document.getElementById("bullet"), zombieBullet=document.getElementById("zombie-bullet");
 
         function updateBars(){
-            // Vida do Jogador
-            document.getElementById("player-health-bar").style.width=(playerHP/10*30)+"px";
             document.getElementById("vida").textContent=playerHP;
-
-            // Vida do Inimigo (Zumbi ou Baú)
             let currentHP, maxHP, enemy;
             if(wave===15){ currentHP=chestHP; maxHP=32; enemy=chest; }
-            else { currentHP=zombieHP; maxHP=5+wave*2; enemy=zombie; }
+            else { currentHP=zombieHP; maxHP=getZombieMaxHP(); enemy=zombie; }
             
             const container = document.getElementById("enemyHPContainer");
-            const fill = document.getElementById("enemyHPFill");
-            const text = document.getElementById("enemyHPText");
-
             container.style.display="block";
-            // Posiciona a barra exatamente embaixo do inimigo
-            container.style.top=(enemy.offsetTop + 35) + "px";
-            container.style.left=(enemy.offsetLeft - 15) + "px";
+            container.style.top=(enemy.offsetTop + enemy.offsetHeight + 5) + "px";
+            container.style.left=(enemy.offsetLeft + (enemy.offsetWidth/2) - 30) + "px";
             
             let percent=Math.max(0, (currentHP/maxHP)*100);
-            fill.style.width=percent+"%";
-            text.textContent=currentHP + " HP";
+            document.getElementById("enemyHPFill").style.width=percent+"%";
+            document.getElementById("enemyHPText").textContent=currentHP + " HP";
         }
 
-        function updateStoreIndicator(){
-            document.getElementById("store-indicator").style.display=(coins>=10)?"block":"none";
+        function getZombieMaxHP() {
+            if(wave===30) return 100; if(wave===40) return 150;
+            if(wave===60) return 300; if(wave===90) return 600;
+            return 5 + wave * 2;
+        }
+
+        function resetEnemy(){
+            zombie.className = ""; zombie.style.width = "30px"; zombie.style.height = "30px";
+            if(wave===15) { chest.style.display="block"; zombie.style.display="none"; chestHP=32; }
+            else {
+                chest.style.display="none"; zombie.style.display="block";
+                zombieHP = getZombieMaxHP();
+                if(wave===30) { zombie.classList.add("striped-boss"); }
+                else if(wave===40) { zombie.style.background = "purple"; }
+                else if(wave===60) { zombie.style.background = "#222"; zombie.style.width="45px"; zombie.style.height="45px"; }
+                else if(wave===90) { zombie.style.background = "black"; zombie.style.boxShadow = "0 0 15px red"; }
+                else { zombie.style.background = "green"; }
+            }
+            updateBars();
         }
 
         function attackEnemy(){
-            if(wave===15){
-                chestHP -= damage;
-                if(chestHP<=0){ coins+=15; wave++; resetEnemy(); }
-            } else {
-                zombieHP -= damage;
-                hitsOnZombie++;
-                if(hitsOnZombie>=3){ moveZombie(); hitsOnZombie=0; }
-                if(zombieHP<=0){ coins+=5; wave++; resetEnemy(); }
+            if(wave===15){ chestHP -= damage; if(chestHP<=0){ coins+=15; wave++; resetEnemy(); } }
+            else { zombieHP -= damage; hitsOnZombie++; 
+                if(hitsOnZombie >= (wave >= 30 ? 6 : 3)){ moveZombie(); hitsOnZombie=0; }
+                if(zombieHP<=0){ coins += (wave%10==0 ? 50 : 5); wave++; resetEnemy(); }
             }
             document.getElementById("coins").textContent=coins;
             document.getElementById("wave").textContent=wave;
@@ -232,15 +147,12 @@
 
         function shootBullet(){
             if(paused) return;
-            document.getElementById("shoot-sound").play();
-            bullet.style.display="block";
-            bullet.style.left=player.offsetLeft+12+"px";
-            bullet.style.top="260px";
+            bullet.style.display="block"; bullet.style.left=player.offsetLeft+12+"px"; bullet.style.top="260px";
             let pos=260;
             const interval=setInterval(()=>{
                 if(paused) return;
                 let enemy = (wave===15) ? chest : zombie;
-                if(pos <= enemy.offsetTop+30 && pos >= enemy.offsetTop && parseInt(bullet.style.left)+5 >= enemy.offsetLeft && parseInt(bullet.style.left) <= enemy.offsetLeft+30){
+                if(pos <= enemy.offsetTop+enemy.offsetHeight && pos >= enemy.offsetTop && parseInt(bullet.style.left)+5 >= enemy.offsetLeft && parseInt(bullet.style.left) <= enemy.offsetLeft+enemy.offsetWidth){
                     clearInterval(interval); bullet.style.display="none"; attackEnemy();
                 } else if(pos <= 0){ clearInterval(interval); bullet.style.display="none"; }
                 else { pos-=15; bullet.style.top=pos+"px"; }
@@ -249,58 +161,53 @@
 
         function shootZombieBullet(){
             if(paused || wave===15) return;
-            zombieBullet.style.display="block";
-            zombieBullet.style.left=zombie.offsetLeft+10+"px";
-            zombieBullet.style.top="30px";
+            zombieBullet.style.display="block"; zombieBullet.style.left=zombie.offsetLeft+(zombie.offsetWidth/2)-5+"px"; zombieBullet.style.top="30px";
             let pos=30;
             const interval=setInterval(()=>{
                 if(paused) return;
-                if(pos>=260 && parseInt(zombieBullet.style.left)+10 > player.offsetLeft && parseInt(zombieBullet.style.left) < player.offsetLeft+30){
+                if(pos>=270 && parseInt(zombieBullet.style.left)+10 > player.offsetLeft && parseInt(zombieBullet.style.left) < player.offsetLeft+30){
                     clearInterval(interval); zombieBullet.style.display="none";
                     if(shieldHP>0){ shieldHP--; if(shieldHP<=0) shield.style.display="none"; }
                     else { playerHP--; if(playerHP<=0){ alert("FIM DE JOGO!"); location.reload(); } }
                     updateBars(); return;
                 }
                 if(pos>=300){ clearInterval(interval); zombieBullet.style.display="none"; return; }
-                pos+=10; zombieBullet.style.top=pos+"px";
+                pos += (wave >= 90 ? 15 : 10); zombieBullet.style.top=pos+"px";
             }, 60);
         }
 
         function moveZombie(){
             let newLeft=zombie.offsetLeft+(Math.random()>0.5?30:-30);
-            zombie.style.left=Math.max(0,Math.min(newLeft,270))+"px";
-            updateBars(); // Atualiza a posição da barra junto com o zumbi
-        }
-
-        function resetEnemy(){
-            chest.style.display=(wave===15)?"block":"none";
-            zombie.style.display=(wave===15)?"none":"block";
-            if(wave===15) chestHP=32; else zombieHP=5+wave*2;
+            zombie.style.left=Math.max(0,Math.min(newLeft,300-zombie.offsetWidth))+"px";
             updateBars();
         }
 
+        function updateStoreIndicator(){ document.getElementById("store-indicator").style.display=(coins>=10)?"block":"none"; }
+
         document.getElementById("attack-button").onclick=shootBullet;
-        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; updateBars(); }};
-        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; updateBars(); }};
+        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; }};
+        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; }};
         document.getElementById("store-button").onclick=()=>store.style.display="block";
         document.getElementById("close-store").onclick=()=>store.style.display="none";
-
-        document.getElementById("buy-upgrade").onclick=()=>{
-            if(coins>=10){ coins-=10; damage++; document.getElementById("damage").textContent=damage; document.getElementById("coins").textContent=coins; updateStoreIndicator(); }
-        };
-
+        document.getElementById("buy-upgrade").onclick=()=>{ if(coins>=10){ coins-=10; damage++; document.getElementById("damage").textContent=damage; document.getElementById("coins").textContent=coins; updateStoreIndicator(); }};
+        
         document.getElementById("buy-shield").onclick=()=>{
-            if(coins>=shieldCost){
-                coins-=shieldCost; shieldHP=2+shieldLevel*2; shield.style.display="block";
-                shieldLevel++; shieldCost+=20; document.getElementById("shield-price").textContent=shieldCost+"💰";
-                document.getElementById("coins").textContent=coins; store.style.display="none";
+            if(coins >= shieldCost){
+                coins -= shieldCost;
+                shieldLevel++;
+                shieldHP = shieldLevel * 3; // Cada nível aguenta 3 hits
+                shield.style.display = "block";
+                shield.style.borderColor = shieldColors[Math.min(shieldLevel-1, shieldColors.length-1)];
+                shieldCost += 20;
+                document.getElementById("shield-price").textContent = shieldCost + "💰";
+                document.getElementById("coins").textContent = coins;
+                store.style.display = "none";
             }
         };
 
         document.getElementById("pause-button").onclick=()=>{ paused=!paused; document.getElementById("pause-button").innerText = paused ? "▶️ CONTINUAR" : "⏸️ PAUSAR"; };
-        
         setInterval(shootZombieBullet, 2000);
-        resetEnemy(); updateBars(); updateStoreIndicator();
+        resetEnemy(); updateBars();
     </script>
 </body>
 </html>
