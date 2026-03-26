@@ -16,7 +16,7 @@
         
         #player, #zombie, #bullet, #zombie-bullet { position: absolute; }
         #player, #zombie { width: 30px; height: 30px; border-radius: 4px; }
-        #player { background: red; bottom: 10px; left: 135px; z-index: 3; }
+        #player { background: red; bottom: 10px; left: 135px; z-index: 3; transition: left 0.1s; }
         #zombie { background: green; top: 10px; left: 135px; transition: left 0.3s; }
         
         /* Jaleco de Cientista (Onda 40) */
@@ -25,12 +25,11 @@
             background: white; border-radius: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 50% 70%, 30% 100%, 0 100%);
         }
 
-        #bullet { background: yellow; width: 5px; height: 10px; display: none; z-index: 2; }
-        #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; display:none; z-index: 2; }
+        #bullet { background: yellow; width: 6px; height: 12px; display: none; z-index: 2; border-radius: 2px; }
+        #zombie-bullet { width: 10px; height: 10px; background: yellow; border-radius: 50%; display:none; z-index: 2; box-shadow: 0 0 5px orange; }
         
-        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; }
+        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; pointer-events: none; }
 
-        /* Barra de Vida Inimigo */
         #enemyHPContainer { position: absolute; width: 60px; height: 16px; background: #333; border: 1px solid #000; display: none; border-radius: 3px; overflow: hidden; z-index: 10; }
         #enemyHPFill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 9px; }
@@ -90,7 +89,7 @@
 
     <script>
         let coins=0, damage=1, wave=1, zombieHP=5, playerHP=10, paused=true, shieldHP=0;
-        let shieldLevel=0, shootSpeed=30, hitsOnZombie=0;
+        let shieldLevel=0, shootSpeed=30;
         const shieldColors = ["cyan", "#2ecc71", "#e67e22", "#2980b9", "#8e44ad"];
 
         const player=document.getElementById("player"), zombie=document.getElementById("zombie"), shield=document.getElementById("shield");
@@ -122,17 +121,22 @@
             updateBars();
         }
 
-        function moveZombie(){ if(!paused) { let n=zombie.offsetLeft+(Math.random()>0.5?30:-30); zombie.style.left=Math.max(0,Math.min(n,270))+"px"; updateBars(); } }
+        function moveZombie(){ 
+            if(paused) return;
+            let n = zombie.offsetLeft + (Math.random() > 0.5 ? 40 : -40);
+            zombie.style.left = Math.max(0, Math.min(n, 270)) + "px";
+            updateBars(); 
+        }
 
         function shootBullet(){
             if(paused || bPlayer.style.display==="block") return;
-            bPlayer.style.display="block"; bPlayer.style.left=player.offsetLeft+12+"px"; bPlayer.style.top="260px";
+            bPlayer.style.display="block"; bPlayer.style.left=(player.offsetLeft+12)+"px"; bPlayer.style.top="260px";
             let pos=260;
             let inv = setInterval(()=>{
                 if(paused) return;
-                if(pos <= zombie.offsetTop+30 && pos >= zombie.offsetTop && parseInt(bPlayer.style.left)+5 >= zombie.offsetLeft && parseInt(bPlayer.style.left) <= zombie.offsetLeft+30){
-                    clearInterval(inv); bPlayer.style.display="none"; zombieHP-=damage; hitsOnZombie++;
-                    if(hitsOnZombie>=3){ moveZombie(); hitsOnZombie=0; }
+                if(pos <= (zombie.offsetTop+30) && pos >= zombie.offsetTop && parseInt(bPlayer.style.left)+5 >= zombie.offsetLeft && parseInt(bPlayer.style.left) <= (zombie.offsetLeft+30)){
+                    clearInterval(inv); bPlayer.style.display="none"; zombieHP-=damage;
+                    moveZombie(); // Zumbi foge ao levar tiro
                     if(zombieHP<=0){ coins+=(wave%10===0?20:5); wave++; resetEnemy(); }
                     updateBars();
                 } else if(pos <= 0){ clearInterval(inv); bPlayer.style.display="none"; }
@@ -142,7 +146,7 @@
 
         function zombieAttack(){
             if(paused || bZombie.style.display==="block") return;
-            bZombie.style.display="block"; bZombie.style.left=zombie.offsetLeft+10+"px"; bZombie.style.top="40px";
+            bZombie.style.display="block"; bZombie.style.left=(zombie.offsetLeft+10)+"px"; bZombie.style.top="40px";
             let pos=40;
             let inv = setInterval(()=>{
                 if(paused) return;
@@ -156,20 +160,20 @@
             }, 50);
         }
 
-        // Funções da Loja
         function buyDmg(){ if(coins>=10){ coins-=10; damage++; updateBars(); } }
         function buyHP(){ if(coins>=15){ coins-=15; playerHP+=5; updateBars(); } }
         function buySpeed(){ if(coins>=30){ coins-=30; shootSpeed=Math.max(10, shootSpeed-5); updateBars(); } }
         function buyShield(){ if(coins>=20){ coins-=20; shieldLevel++; shieldHP=shieldLevel*3; shield.style.display="block"; shield.style.borderColor=shieldColors[Math.min(shieldLevel-1,4)]; updateBars(); } }
 
         document.getElementById("attack-button").onclick=shootBullet;
-        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=player.offsetLeft-10+"px"; } };
-        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=player.offsetLeft-10+"px"; } };
+        document.getElementById("left-button").onclick=()=>{ if(!paused) { player.style.left=Math.max(0,player.offsetLeft-30)+"px"; shield.style.left=(player.offsetLeft-10)+"px"; } };
+        document.getElementById("right-button").onclick=()=>{ if(!paused) { player.style.left=Math.min(270,player.offsetLeft+30)+"px"; shield.style.left=(player.offsetLeft-10)+"px"; } };
         document.getElementById("store-button").onclick=()=> document.getElementById("store").style.display="block";
         document.getElementById("pause-button").onclick=()=>{ paused=!paused; document.getElementById("pause-button").innerText=paused?"▶️ CONTINUAR":"⏸️ PAUSAR"; };
 
-        setInterval(zombieAttack, 2000); // Zumbi atira a cada 2 segundos
-        setInterval(() => { if(!paused && Math.random() > 0.7) moveZombie(); }, 3000); // Zumbi se mexe sozinho as vezes
+        // Loops Automáticos
+        setInterval(zombieAttack, 2000); // Tiro do zumbi
+        setInterval(() => { if(!paused) moveZombie(); }, 3500); // Movimento aleatório do zumbi
     </script>
 </body>
 </html>
