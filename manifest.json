@@ -1,0 +1,21 @@
+{
+  "name": "Guerreiro das Sombras",
+  "short_name": "Sombras",
+  "description": "Jogo de batalha contra zumbis",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff0000",
+  "icons": [
+    {
+      "src": "bico.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "bico.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
