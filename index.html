@@ -15,7 +15,7 @@
         #player, #bullet, #zombie-bullet { position: absolute; }
         #player { width: 30px; height: 30px; background: red; bottom: 10px; left: 135px; border-radius: 4px; z-index: 3; }
 
-        /* GRUPO DO ZUMBI */
+        /* GRUPO DO ZUMBI - GARANTE QUE NADA SE SEPARA */
         #zombie-group {
             position: absolute; width: 60px; height: 55px;
             top: 10px; left: 120px; transition: left 0.2s ease-out;
@@ -38,7 +38,7 @@
 
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 300px; margin: 10px auto; }
-        button { padding: 15px 5px; font-size: 14px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; font-weight: bold; }
+        button { padding: 15px 5px; font-size: 14px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #attack-button { grid-column: 1 / 4; background: #ff4444; font-size: 18px; }
 
         #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 280px; }
@@ -49,7 +49,7 @@
     <div id="main-menu">
         <h1 style="font-size: 30px;">GUERREIRO DAS SOMBRAS</h1>
         <button class="menu-btn" onclick="startGame()">JOGAR</button>
-        <button class="menu-btn" onclick="alert('Skins: Em breve!')">SKINS</button>
+        <button class="menu-btn" onclick="showSkins()">SKINS</button>
     </div>
 
     <h1>GUERREIRO DAS SOMBRAS</h1>
@@ -97,20 +97,20 @@
 
     <script>
         let coins=0, damage=1, wave=1, zombieHP=5, playerHP=10, paused=true, shieldHP=0;
-        let shieldLevel=0, shootSpeed=30, hitsCounter=0; // Contador de hits
+        let shieldLevel=0, shootSpeed=30, hitsCounter=0;
         const shieldColors = ["cyan", "#2ecc71", "#e67e22", "#2980b9", "#8e44ad"];
 
         const player=document.getElementById("player"), zombie=document.getElementById("zombie"), zGroup=document.getElementById("zombie-group"), shield=document.getElementById("shield");
         const bPlayer=document.getElementById("bullet"), bZombie=document.getElementById("zombie-bullet");
 
         function startGame() { document.getElementById('main-menu').style.display = 'none'; paused = false; resetEnemy(); }
+        function showSkins() { alert("Skins: Em breve!"); }
 
         function updateBars(){
             document.getElementById("vida").textContent=playerHP;
             document.getElementById("coins").textContent=coins;
             document.getElementById("wave").textContent=wave;
             document.getElementById("damage").textContent=damage;
-
             let maxHP = (wave===30)?100 : (wave===40)?150 : 5+wave*2;
             document.getElementById("enemyHPFill").style.width=Math.max(0, (zombieHP/maxHP)*100)+"%";
             document.getElementById("enemyHPText").textContent=zombieHP + " HP";
@@ -122,12 +122,13 @@
             if(wave===30) zombie.style.background="repeating-linear-gradient(45deg,#000,#000 5px,#fff 5px,#fff 10px)";
             else if(wave===40) { zombie.style.background="purple"; zombie.classList.add("scientist-coat"); }
             else zombie.style.background="green";
-            hitsCounter = 0; // Reseta contador de hits
+            hitsCounter = 0;
             updateBars();
         }
 
         function moveZombie(){ 
             if(paused) return;
+            // Movimento aleatório lateral apenas quando chamado
             let n = zGroup.offsetLeft + (Math.random() > 0.5 ? 60 : -60);
             zGroup.style.left = Math.max(0, Math.min(n, 240)) + "px";
         }
@@ -139,12 +140,14 @@
             let inv = setInterval(()=>{
                 if(paused) return;
                 let zL = zGroup.offsetLeft + 15;
+                // Detecção de colisão precisa
                 if(pos <= 40 && pos >= 10 && parseInt(bPlayer.style.left)+5 >= zL && parseInt(bPlayer.style.left) <= zL+30){
                     clearInterval(inv); bPlayer.style.display="none"; 
                     zombieHP -= damage;
-                    hitsCounter++; // Aumenta o contador de hits
+                    hitsCounter++; 
                     
-                    if(hitsCounter >= 3){ // Só move ao atingir 3 tiros
+                    // SÓ MEXE SE CHEGAR A 3 HITS
+                    if(hitsCounter >= 3){ 
                         moveZombie();
                         hitsCounter = 0;
                     }
@@ -173,6 +176,7 @@
             }, 50);
         }
 
+        // Funções da Loja
         function buyDmg(){ if(coins>=10){ coins-=10; damage++; updateBars(); } }
         function buyHP(){ if(coins>=15){ coins-=15; playerHP+=5; updateBars(); } }
         function buySpeed(){ if(coins>=30){ coins-=30; shootSpeed=Math.max(10, shootSpeed-5); updateBars(); } }
@@ -184,6 +188,7 @@
         document.getElementById("store-button").onclick=()=> document.getElementById("store").style.display="block";
         document.getElementById("pause-button").onclick=()=>{ paused=!paused; document.getElementById("pause-button").innerText=paused?"▶️ CONTINUAR":"⏸️ PAUSAR"; };
 
+        // O único loop automático permitido é o ataque do zumbi
         setInterval(zombieAttack, 2000); 
     </script>
 </body>
