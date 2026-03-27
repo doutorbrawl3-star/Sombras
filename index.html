@@ -5,41 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Guerreiro das Sombras Pro</title>
     <style>
-        body { background: #000; color: white; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; transition: background 1s; }
+        body { background: #000; color: white; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
         .menu-btn { width: 220px; padding: 15px; margin: 10px; background: #111; border: 2px solid #f00; color: #fff; font-size: 18px; font-weight: bold; border-radius: 10px; }
         
-        #game-area { width: 300px; height: 350px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; transition: background 0.5s; }
+        #game-area { width: 300px; height: 350px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; }
         #player { width: 30px; height: 30px; position: absolute; bottom: 10px; left: 135px; border-radius: 4px; z-index: 5; background: red; }
         
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
+        .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
         .z-bullet { width: 12px; height: 12px; background: orange; border-radius: 50%; position: absolute; z-index: 4; box-shadow: 0 0 8px orange; }
-        .drop-item { position: absolute; width: 20px; height: 20px; z-index: 6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; animation: bounce 0.5s infinite alternate; }
+        .drop-item { position: absolute; width: 25px; height: 25px; z-index: 6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: 2px solid white; }
 
-        #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: all 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
-        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; transition: all 0.2s; }
-        .boss-size { width: 80px !important; height: 80px !important; }
-        .z-warning { transform: scale(1.2); background: white !important; }
+        #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
+        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; transition: filter 0.2s; }
+        .z-burning { filter: hue-rotate(280deg) brightness(1.5); }
 
-        #enemyHPContainer { width: 60px; height: 12px; background: #333; border: 1px solid #000; margin-top: 5px; border-radius: 3px; overflow: hidden; }
+        #enemyHPContainer { width: 70px; height: 16px; background: #333; border: 1px solid #fff; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
+        #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 10px; z-index: 10; }
 
         #shield { position: absolute; width: 46px; height: 46px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; box-shadow: 0 0 10px cyan; pointer-events: none; }
-        #pet { position: absolute; width: 15px; height: 15px; background: cyan; border-radius: 3px; display: none; box-shadow: 0 0 8px cyan; z-index: 4; }
 
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
         
-        button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; position: relative; overflow: hidden; }
+        button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; position: relative; }
         #attack-button { grid-column: 1 / 3; background: #f44; }
         #focus-btn { background: #8e44ad; display: none; }
         
         #super-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #222; }
         #super-bar-fill { height: 100%; width: 0%; background: cyan; }
         
-        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; max-height: 80vh; overflow-y: auto; border-radius: 10px; }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -59,10 +58,12 @@
     <div id="game-area">
         <div id="player"></div>
         <div id="shield"></div>
-        <div id="pet"></div>
         <div id="zombie-group">
             <div id="zombie"></div>
-            <div id="enemyHPContainer"><div id="enemyHPFill"></div></div>
+            <div id="enemyHPContainer">
+                <div id="enemyHPFill"></div>
+                <div id="enemyHPText">0 HP</div>
+            </div>
         </div>
     </div>
 
@@ -94,12 +95,12 @@
     </div>
 
     <script>
-        let petOwned, focusOwned, shieldSkill;
+        let petOwned = false, focusOwned = false, shieldSkill = false;
         let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, playerHits=0;
         let canShoot = true;
-
+        
         const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
-        const area=document.getElementById("game-area"), shield=document.getElementById("shield"), pet=document.getElementById("pet");
+        const area=document.getElementById("game-area"), shield=document.getElementById("shield");
 
         function startGame(fullReset) {
             if(fullReset) { localStorage.clear(); petOwned=false; focusOwned=false; shieldSkill=false; }
@@ -120,57 +121,85 @@
             document.getElementById("wave").textContent = wave;
             document.getElementById("damage").textContent = damage;
             document.getElementById("focus-btn").style.display = focusOwned ? "block" : "none";
-            pet.style.display = petOwned ? "block" : "none";
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
-            document.getElementById("enemyHPFill").style.width = Math.max(0, (zombieHP/zombieMaxHP)*100) + "%";
             
-            if(shieldHP > 0) { shield.style.display="block"; shield.style.left=(player.offsetLeft-8)+"px"; shield.style.top=(player.offsetTop-8)+"px"; }
-            else shield.style.display="none";
-
-            // Troca cor do cenário
-            if(wave >= 15) area.style.background = "#1a0a2e";
-            else if(wave >= 5) area.style.background = "#1a1a1a";
+            let percent = (zombieHP / zombieMaxHP) * 100;
+            document.getElementById("enemyHPFill").style.width = Math.max(0, percent) + "%";
+            document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
+            
+            if(shieldHP > 0) {
+                shield.style.display = "block";
+                shield.style.left = (player.offsetLeft - 8) + "px";
+                shield.style.top = (player.offsetTop - 8) + "px";
+            } else { shield.style.display = "none"; }
         }
 
         function resetEnemy() {
-            let isBoss = (wave % 10 === 0);
-            zombieMaxHP = isBoss ? (wave * 5) : (5 + wave * 2);
+            zombieMaxHP = (wave % 10 === 0) ? (wave * 5) : (5 + wave * 2);
             zombieHP = zombieMaxHP;
-            zombie.className = isBoss ? "boss-size" : "";
-            zombie.style.background = isBoss ? "purple" : "green";
             zGroup.style.left = "120px";
             playerHits = 0;
+            zombie.style.background = (wave % 10 === 0) ? "purple" : "green";
             updateHUD();
         }
 
         function shootBullet(isSuper=false, off=0) {
             if(paused || (!isSuper && !canShoot)) return;
-            if(!isSuper) { canShoot=false; setTimeout(()=>canShoot=true, 700); }
+            if(!isSuper) { canShoot=false; setTimeout(()=>canShoot=true, 600); }
+            
             const b = document.createElement("div");
             b.className = "bullet";
             b.style.left = (player.offsetLeft + 12 + off) + "px";
             b.style.top = (player.offsetTop - 10) + "px";
             area.appendChild(b);
+
             let m = setInterval(() => {
                 if(paused) return;
                 let pos = parseInt(b.style.top);
                 let zL = zGroup.offsetLeft;
-                let zT = zGroup.offsetTop;
-                if(pos <= zT + 40 && pos >= zT && parseInt(b.style.left) >= zL && parseInt(b.style.left) <= zL + 60) {
+                if(pos <= 60 && pos >= 10 && parseInt(b.style.left) >= zL && parseInt(b.style.left) <= zL + 60) {
                     clearInterval(m); b.remove();
-                    zombieHP -= (isSuper ? damage*2 : damage);
+                    zombieHP -= damage;
                     playerHits++;
                     if(playerHits >= 3) { zGroup.style.left = (Math.random()*240)+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
-                    if(zombieHP <= 0) { spawnDrop(zL+30, zT+30); coins+=10; wave++; resetEnemy(); }
+                    if(zombieHP <= 0) { spawnDrop(zL+30, 40); coins+=10; wave++; resetEnemy(); }
                     updateHUD();
                 } else if(pos <= -20) { clearInterval(m); b.remove(); }
-                else b.style.top = (pos - 10) + "px";
+                else b.style.top = (pos - 12) + "px";
             }, 25);
         }
 
+        function shootFocusBall() {
+            if(paused || !focusOwned || document.querySelector(".focus-ball")) return;
+            const ball = document.createElement("div");
+            ball.className = "focus-ball";
+            ball.style.left = (player.offsetLeft + 7) + "px";
+            ball.style.top = (player.offsetTop - 15) + "px";
+            area.appendChild(ball);
+
+            let m = setInterval(() => {
+                if(paused) return;
+                let pos = parseInt(ball.style.top);
+                let zL = zGroup.offsetLeft;
+                if(pos <= 60 && pos >= 10 && parseInt(ball.style.left) >= zL && parseInt(ball.style.left) <= zL + 60) {
+                    clearInterval(m); ball.remove();
+                    zombie.classList.add("z-burning");
+                    let ticks = 0;
+                    let burn = setInterval(() => {
+                        zombieHP -= (damage * 0.5); updateHUD(); ticks++;
+                        if(ticks >= 15 || zombieHP <= 0) { 
+                            clearInterval(burn); zombie.classList.remove("z-burning");
+                            if(zombieHP <= 0) { coins+=10; wave++; resetEnemy(); }
+                        }
+                    }, 200);
+                } else if(pos <= -20) { clearInterval(m); ball.remove(); }
+                else ball.style.top = (pos - 8) + "px";
+            }, 30);
+        }
+
         function spawnDrop(x, y) {
-            if(Math.random() > 0.3) return; // 30% de chance
+            if(Math.random() > 0.4) return;
             const item = document.createElement("div");
             item.className = "drop-item";
             let type = Math.random() > 0.5 ? "❤️" : "⚡";
@@ -179,15 +208,19 @@
             item.style.top = y + "px";
             item.style.background = type === "❤️" ? "red" : "yellow";
             area.appendChild(item);
+
             let pos = y;
             let m = setInterval(() => {
                 if(paused) return;
-                pos += 3; item.style.top = pos + "px";
-                if(pos >= 310 && parseInt(item.style.left) >= player.offsetLeft && parseInt(item.style.left) <= player.offsetLeft + 30) {
+                pos += 4; item.style.top = pos + "px";
+                // Colisão com o player
+                let pL = player.offsetLeft;
+                if(pos >= 310 && pos <= 345 && parseInt(item.style.left) >= pL - 10 && parseInt(item.style.left) <= pL + 35) {
                     clearInterval(m); item.remove();
-                    if(type === "❤️") playerHP += 3; else superCharge = 100;
+                    if(type === "❤️") playerHP = Math.min(20, playerHP + 3);
+                    else superCharge = 100;
                     updateHUD();
-                } else if(pos > 350) { clearInterval(m); item.remove(); }
+                } else if(pos > 360) { clearInterval(m); item.remove(); }
             }, 40);
         }
 
@@ -201,12 +234,13 @@
             let pos = 40;
             let m = setInterval(() => {
                 if(paused) return;
-                if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= player.offsetLeft && parseInt(zb.style.left) <= player.offsetLeft + 30) {
+                let pL = player.offsetLeft;
+                if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL + 30) {
                     clearInterval(m); zb.remove();
                     if(shieldHP > 0) shieldHP--; else { playerHP--; if(playerHP <= 0) die(); }
                     updateHUD();
                 } else if(pos >= 360) { clearInterval(m); zb.remove(); }
-                else pos += (wave % 10 === 0 ? 10 : 7); zb.style.top = pos + "px";
+                else pos += 7; zb.style.top = pos + "px";
             }, 40);
         }
 
@@ -219,41 +253,29 @@
             if(paused) return;
             let cur = player.offsetLeft;
             player.style.left = (d === 'L' ? Math.max(0, cur - 30) : Math.min(270, cur + 30)) + "px";
-            if(petOwned) { pet.style.left=(player.offsetLeft-20)+"px"; pet.style.top=player.offsetTop+"px"; }
             updateHUD();
         }
 
         function buyUpgrade(t) {
-            let c = (t=='dmg'?10 : t=='hp'?15 : 20);
-            if(coins >= c) { coins -= c; if(t=='dmg') damage++; if(t=='hp') playerHP += 5; if(t=='shield') { shieldHP=5; shieldSkill=true; localStorage.setItem("gs_shield_skill","true"); } updateHUD(); }
+            let cost = (t=='dmg'?10 : t=='hp'?15 : 20);
+            if(coins >= cost) { coins -= cost; if(t=='dmg') damage++; if(t=='hp') playerHP += 5; if(t=='shield') { shieldHP=5; shieldSkill=true; localStorage.setItem("gs_shield_skill","true"); } updateHUD(); }
         }
 
         function buyItem(t) {
-            let c = (t=='focus'?100 : 150);
-            if(coins >= c) { coins -= c; if(t=='focus') { focusOwned=true; localStorage.setItem("gs_focus","true"); } if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); } updateHUD(); }
+            let cost = (t=='focus'?100 : 150);
+            if(coins >= cost) { coins -= cost; if(t=='focus') { focusOwned=true; localStorage.setItem("gs_focus","true"); } if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); } updateHUD(); }
         }
 
-        function activateSuper() { if(superCharge<100 || paused) return; superCharge=0; for(let i=-40; i<=40; i+=20) shootBullet(true, i); updateHUD(); }
+        function activateSuper() {
+            if(superCharge < 100 || paused) return;
+            superCharge = 0;
+            for(let i = -60; i <= 60; i += 20) shootBullet(true, i);
+            updateHUD();
+        }
+
         function togglePause() { paused = !paused; }
         function die() { paused=true; document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
         function backToLobby() { location.reload(); }
-        
-        // Função para a bola de foco (🔮)
-        function shootFocusBall() {
-            if(paused || !focusOwned) return;
-            const ball = document.createElement("div");
-            ball.className = "bullet"; ball.style.background = "#8e44ad"; ball.style.width="15px"; ball.style.height="15px";
-            ball.style.left = (player.offsetLeft + 7) + "px"; ball.style.top = "300px";
-            area.appendChild(ball);
-            let m = setInterval(() => {
-                let pos = parseInt(ball.style.top);
-                if(pos <= zGroup.offsetTop + 40 && parseInt(ball.style.left) >= zGroup.offsetLeft) {
-                    clearInterval(m); ball.remove();
-                    let t = 0; let burn = setInterval(() => { zombieHP -= 1; updateHUD(); t++; if(t>10 || zombieHP<=0) clearInterval(burn); }, 200);
-                } else if(pos < -20) { clearInterval(m); ball.remove(); }
-                else ball.style.top = (pos - 8) + "px";
-            }, 30);
-        }
     </script>
 </body>
 </html>
