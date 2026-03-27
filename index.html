@@ -92,6 +92,7 @@
     <script>
         let petOwned = false, focusOwned = false, shieldSkill = false;
         let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, superCharge=0, playerHits=0;
+        let canShoot = true; // Controle de recarga
         
         const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
         const area=document.getElementById("game-area"), pet=document.getElementById("pet"), bZombie=document.getElementById("zombie-bullet");
@@ -108,6 +109,7 @@
             document.getElementById("main-menu").classList.add("hidden");
             paused = false; coins = 0; wave = 1; playerHP = 10; damage = 1; superCharge = 0; playerHits = 0;
             shieldHP = (!fullReset && shieldSkill) ? 5 : 0;
+            canShoot = true;
             resetEnemy(); 
             updateHUD();
         }
@@ -135,6 +137,13 @@
 
         function shootBullet(isSuper=false, off=0) {
             if(paused) return;
+            if(!isSuper && !canShoot) return; // Só atira se não estiver em recarga
+
+            if(!isSuper) {
+                canShoot = false;
+                setTimeout(() => { canShoot = true; }, 400); // RECARGA DE 0.4 SEGUNDOS
+            }
+
             const b = document.createElement("div");
             b.className = "bullet";
             b.style.left = (player.offsetLeft+12+off) + "px";
@@ -146,62 +155,19 @@
                 let pos = parseInt(b.style.top);
                 let zL = zGroup.offsetLeft + 15;
                 
-                // Colisão com o Zumbi
                 if(pos<=45 && pos>=10 && parseInt(b.style.left)+6>=zL && parseInt(b.style.left)<=zL+30) {
                     clearInterval(m); b.remove();
                     zombieHP -= damage;
-                    
-                    // MECÂNICA DOS 3 TIROS PARA MUDAR DE LUGAR
                     playerHits++;
                     if(playerHits >= 3) {
                         zGroup.style.left = (Math.random() * 240) + "px";
                         playerHits = 0;
                     }
-
                     superCharge = Math.min(100, superCharge+5);
                     checkDeath();
                 } else if(pos<=-20){ clearInterval(m); b.remove(); }
-                else { b.style.top = (pos-10) + "px"; } // SUA VELOCIDADE (10)
-            }, 25);
-        }
-
-        function shootFocusBall() {
-            if(paused || !focusOwned || document.querySelector(".focus-ball")) return;
-            const ball = document.createElement("div");
-            ball.className = "focus-ball";
-            ball.style.left = (player.offsetLeft + 7) + "px";
-            ball.style.top = "260px";
-            area.appendChild(ball);
-            let m = setInterval(() => {
-                if(paused) return;
-                let pos = parseInt(ball.style.top);
-                let zL = zGroup.offsetLeft + 15;
-                if(pos<=45 && pos>=10 && parseInt(ball.style.left)+15>=zL && parseInt(ball.style.left)<=zL+30) {
-                    clearInterval(m); ball.remove(); applyFocusDamage();
-                } else if(pos<=-20){ clearInterval(m); ball.remove(); }
-                else { ball.style.top = (pos-8) + "px"; }
-            }, 30);
-        }
-
-        function applyFocusDamage() {
-            zombie.classList.add("zombie-burning");
-            let ticks = 0;
-            let burn = setInterval(() => {
-                if(paused) return;
-                zombieHP -= (damage * 0.5);
-                checkDeath();
-                ticks++;
-                if(ticks >= 15) { clearInterval(burn); zombie.classList.remove("zombie-burning"); }
-            }, 200);
-        }
-
-        function checkDeath() {
-            if(zombieHP <= 0) {
-                coins += (wave % 10 == 0 ? 50 : 5);
-                wave++;
-                resetEnemy();
-            }
-            updateHUD();
+                else { b.style.top = (pos-8) + "px"; } // VELOCIDADE DO TIRO MAIS SUAVE
+            }, 20);
         }
 
         function zombieAttack() {
@@ -216,10 +182,14 @@
                     if(shieldHP > 0) { shieldHP--; } else { playerHP--; if(playerHP<=0) die(); }
                     updateHUD();
                 } else if(pos>=310){ clearInterval(m); bZombie.style.display="none"; }
-                else { pos+=8; bZombie.style.top=pos+"px"; } // VELOCIDADE ZUMBI (8)
-            }, 40);
+                else { pos+=9; bZombie.style.top=pos+"px"; } // TIRO DO ZUMBI MAIS RÁPIDO
+            }, 30);
         }
 
+        // --- AS OUTRAS FUNÇÕES CONTINUAM IGUAIS ---
+        function shootFocusBall() { if(paused || !focusOwned || document.querySelector(".focus-ball")) return; const ball = document.createElement("div"); ball.className = "focus-ball"; ball.style.left = (player.offsetLeft + 7) + "px"; ball.style.top = "260px"; area.appendChild(ball); let m = setInterval(() => { if(paused) return; let pos = parseInt(ball.style.top); let zL = zGroup.offsetLeft + 15; if(pos<=45 && pos>=10 && parseInt(ball.style.left)+15>=zL && parseInt(ball.style.left)<=zL+30) { clearInterval(m); ball.remove(); applyFocusDamage(); } else if(pos<=-20){ clearInterval(m); ball.remove(); } else { ball.style.top = (pos-10) + "px"; } }, 30); }
+        function applyFocusDamage() { zombie.classList.add("zombie-burning"); let ticks = 0; let burn = setInterval(() => { if(paused) return; zombieHP -= (damage * 0.5); checkDeath(); ticks++; if(ticks >= 15) { clearInterval(burn); zombie.classList.remove("zombie-burning"); } }, 200); }
+        function checkDeath() { if(zombieHP <= 0) { coins += (wave % 10 == 0 ? 50 : 5); wave++; resetEnemy(); } updateHUD(); }
         function die() { paused = true; document.getElementById("death-stats").textContent = `ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
         function move(d) { if(!paused) { let pL = (d=='L' ? Math.max(0, player.offsetLeft-30) : Math.min(270, player.offsetLeft+30)); player.style.left = pL + "px"; document.getElementById("shield").style.left = (pL - 10) + "px"; if(petOwned) { pet.style.left = (pL - 20) + "px"; pet.style.top = (player.offsetTop - 10) + "px"; } } }
         function buyUpgrade(t) { let cost = (t=='dmg'?10:t=='hp'?15:20); if(coins >= cost){ coins -= cost; if(t=='dmg') damage++; if(t=='hp') playerHP+=5; if(t=='shield') { shieldHP=5; shieldSkill=true; localStorage.setItem("gs_shield_skill","true"); } updateHUD(); } }
