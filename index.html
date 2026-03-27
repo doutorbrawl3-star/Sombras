@@ -17,22 +17,23 @@
         .z-bullet { width: 12px; height: 12px; background: orange; border-radius: 50%; position: absolute; z-index: 4; box-shadow: 0 0 8px orange; }
         
         #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
-        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; transition: transform 0.2s; }
+        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; }
         .z-warning { transform: scale(1.3); background: white !important; }
 
         #enemyHPContainer { width: 60px; height: 12px; background: #333; border: 1px solid #000; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
-        #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.1s; }
+        #enemyHPFill { height: 100%; background: #0f0; width: 100%; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 8px; }
 
         #shield { position: absolute; width: 46px; height: 46px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; box-shadow: 0 0 10px cyan; pointer-events: none; }
 
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
-        button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; position: relative; }
+        
+        button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; position: relative; overflow: hidden; }
         #attack-button { grid-column: 1 / 3; background: #f44; }
-        #super-button { background: #444; overflow: hidden; }
-        #super-bar-bg { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #222; }
-        #super-bar-fill { position: absolute; bottom: 0; left: 0; width: 0%; height: 6px; background: cyan; transition: width 0.2s; }
+        
+        #super-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #222; }
+        #super-bar-fill { height: 100%; width: 0%; background: cyan; transition: width 0.2s; }
         
         #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; }
     </style>
@@ -74,7 +75,7 @@
         <button id="attack-button" onclick="shootBullet()">🔥 ATACAR</button>
         <button id="super-button" onclick="activateSuper()">
             ✨ SUPER
-            <div id="super-bar-bg"><div id="super-bar-fill"></div></div>
+            <div id="super-bar-container"><div id="super-bar-fill"></div></div>
         </button>
         <button onclick="togglePause()" style="grid-column:1/4">⏸️ PAUSAR</button>
     </div>
@@ -88,7 +89,7 @@
     </div>
 
     <script>
-        let petOwned = false, shieldSkill = false;
+        let shieldSkill = false;
         let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, playerHits=0;
         let canShoot = true;
         
@@ -99,13 +100,32 @@
             if(fullReset) { localStorage.clear(); shieldSkill = false; }
             else { shieldSkill = localStorage.getItem("gs_shield_skill") === "true"; }
             
-            document.getElementById("main-menu").classList.add("hidden");
             paused = false; coins = 0; wave = 1; playerHP = 10; damage = 1; superCharge = 0;
             shieldHP = (!fullReset && shieldSkill) ? 5 : 0;
             
+            document.getElementById("main-menu").classList.add("hidden");
             resetEnemy(); 
             updateHUD();
-            startLoops();
+            
+            // Loop de ataque do zumbi
+            const attackLoop = setInterval(() => {
+                if(paused) return;
+                if(playerHP <= 0) clearInterval(attackLoop);
+                zombieAttack();
+            }, 2000);
+
+            // Loop do Super do Zumbi
+            const superZLoop = setInterval(() => {
+                if(paused) return;
+                if(playerHP <= 0) clearInterval(superZLoop);
+                if(wave > 3) {
+                    zombie.classList.add("z-warning");
+                    setTimeout(() => {
+                        zombie.classList.remove("z-warning");
+                        zombieAttack(-25); zombieAttack(0); zombieAttack(25);
+                    }, 800);
+                }
+            }, 9000);
         }
 
         function updateHUD() {
@@ -114,15 +134,11 @@
             document.getElementById("wave").textContent = wave;
             document.getElementById("damage").textContent = damage;
             
-            // Barra do Zumbi
             const percent = (zombieHP / zombieMaxHP) * 100;
             document.getElementById("enemyHPFill").style.width = Math.max(0, percent) + "%";
-            document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
-            
-            // Barra do Super
+            document.getElementById("enemyHPText").textContent = Math.ceil(Math.max(0, zombieHP)) + " HP";
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
             
-            // Escudo
             if(shieldHP > 0) {
                 shield.style.display = "block";
                 shield.style.left = (player.offsetLeft - 8) + "px";
@@ -135,15 +151,13 @@
             zombieHP = zombieMaxHP;
             zGroup.style.left = "120px";
             playerHits = 0;
-            if(wave % 10 === 0) zombie.style.background = "purple";
-            else zombie.style.background = "green";
             updateHUD();
         }
 
         function shootBullet() {
             if(paused || !canShoot) return;
             canShoot = false;
-            setTimeout(() => canShoot = true, 800);
+            setTimeout(() => canShoot = true, 700);
 
             const b = document.createElement("div");
             b.className = "bullet";
@@ -188,17 +202,27 @@
             }, 40);
         }
 
-        function startLoops() {
-            setInterval(() => { if(!paused) zombieAttack(); }, 2000);
-            setInterval(() => {
-                if(!paused && wave > 3) {
-                    zombie.classList.add("z-warning");
-                    setTimeout(() => {
-                        zombie.classList.remove("z-warning");
-                        zombieAttack(-20); zombieAttack(0); zombieAttack(20);
-                    }, 1000);
-                }
-            }, 10000);
+        function activateSuper() {
+            if(superCharge < 100 || paused) return;
+            superCharge = 0;
+            for(let i = -60; i <= 60; i += 20) {
+                const b = document.createElement("div");
+                b.className = "bullet";
+                b.style.left = (player.offsetLeft + 12 + i) + "px";
+                b.style.top = (player.offsetTop - 10) + "px";
+                b.style.background = "cyan";
+                area.appendChild(b);
+                let m = setInterval(() => {
+                    let pos = parseInt(b.style.top);
+                    if(pos <= 45 && pos >= 10 && parseInt(b.style.left)+6 >= zGroup.offsetLeft+15 && parseInt(b.style.left) <= zGroup.offsetLeft+45) {
+                        clearInterval(m); b.remove(); zombieHP -= (damage * 2.5);
+                        if(zombieHP <= 0) { coins += 10; wave++; resetEnemy(); }
+                        updateHUD();
+                    } else if(pos <= -20) { clearInterval(m); b.remove(); }
+                    else { b.style.top = (pos - 15) + "px"; }
+                }, 20);
+            }
+            updateHUD();
         }
 
         function move(d) {
@@ -217,29 +241,6 @@
                 if(t=='shield') { shieldHP = 5; shieldSkill = true; localStorage.setItem("gs_shield_skill", "true"); }
                 updateHUD();
             }
-        }
-
-        function activateSuper() {
-            if(superCharge < 100 || paused) return;
-            superCharge = 0;
-            for(let i = -40; i <= 40; i += 20) {
-                const b = document.createElement("div");
-                b.className = "bullet";
-                b.style.left = (player.offsetLeft + 12 + i) + "px";
-                b.style.top = "300px";
-                b.style.background = "cyan";
-                area.appendChild(b);
-                let m = setInterval(() => {
-                    let pos = parseInt(b.style.top);
-                    if(pos <= 45 && pos >= 10 && parseInt(b.style.left)+6 >= zGroup.offsetLeft+15 && parseInt(b.style.left) <= zGroup.offsetLeft+45) {
-                        clearInterval(m); b.remove(); zombieHP -= (damage * 3);
-                        if(zombieHP <= 0) { coins += 10; wave++; resetEnemy(); }
-                        updateHUD();
-                    } else if(pos <= -20) { clearInterval(m); b.remove(); }
-                    else { b.style.top = (pos - 15) + "px"; }
-                }, 20);
-            }
-            updateHUD();
         }
 
         function die() { paused = true; document.getElementById("death-stats").textContent = `ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
