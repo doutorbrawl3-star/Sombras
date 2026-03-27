@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/jpeg" href="bico.jpg">
     <link rel="manifest" href="manifest.json">
     <title>Guerreiro das Sombras Pro</title>
     <style>
@@ -16,19 +15,17 @@
         #game-area.forest { background: #1a2a1a; border-color: #2e4d2e; }
         #game-area.inferno { background: #2a1a1a; border-color: #4d2e2e; }
 
-        #player { width: 30px; height: 30px; position: absolute; bottom: 10px; left: 135px; border-radius: 4px; z-index: 5; }
+        #player { width: 30px; height: 30px; position: absolute; bottom: 10px; left: 135px; border-radius: 4px; z-index: 5; background: red; }
+        #laser { position: absolute; width: 6px; background: #0ff; box-shadow: 0 0 15px #0ff; display: none; z-index: 2; pointer-events: none; }
         
         #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.2s; display: flex; flex-direction: column; align-items: center; z-index: 4; }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; }
-        .scientist-coat::after { content: ""; position: absolute; top: 5px; left: 5px; width: 20px; height: 25px; background: white; border-radius: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 50% 70%, 30% 100%, 0 100%); }
 
         #enemyHPContainer { width: 60px; height: 16px; background: #333; border: 1px solid #000; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 9px; }
 
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
-        .bullet.piercing { background: #0f0; box-shadow: 0 0 5px #0f0; }
-        .bullet.incendiary { background: #f00; box-shadow: 0 0 5px #f00; }
         #zombie-bullet { width: 10px; height: 10px; background: orange; border-radius: 50%; position: absolute; display: none; }
         #pet { position: absolute; width: 15px; height: 15px; background: cyan; border-radius: 3px; display: none; box-shadow: 0 0 8px cyan; z-index: 4; }
         #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; }
@@ -37,6 +34,7 @@
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
         button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #attack-button { grid-column: 1 / 3; background: #f44; }
+        #focus-btn { background: #8e44ad; }
         #super-button { background: #444; position: relative; overflow: hidden; }
         #super-bar { position: absolute; bottom: 0; left: 0; width: 0%; height: 5px; background: cyan; }
         #super-button.ready { background: #005555; box-shadow: 0 0 10px cyan; }
@@ -48,8 +46,8 @@
     <div id="main-menu" class="overlay">
         <h1 style="color:red">GUERREIRO DAS SOMBRAS</h1>
         <div style="color:gold;margin-bottom:15px">MOEDAS: <span id="lobby-coins">0</span></div>
-        <button class="menu-btn" onclick="startGame()">JOGAR</button>
-        <button class="menu-btn" onclick="openSkins()">SKINS</button>
+        <button class="menu-btn" onclick="startGame(true)">NOVO JOGO</button>
+        <button class="menu-btn" style="border-color:cyan" onclick="startGame(false)">CONTINUAR COM HABILIDADES</button>
     </div>
 
     <div id="game-over" class="overlay hidden">
@@ -58,9 +56,9 @@
         <button class="menu-btn" onclick="backToLobby()">LOBBY</button>
     </div>
 
-    <h1>GUERREIRO DAS SOMBRAS</h1>
     <div id="game-area">
         <div id="player"></div>
+        <div id="laser"></div>
         <div id="shield"></div>
         <div id="pet"></div>
         <div id="zombie-group">
@@ -71,87 +69,162 @@
     </div>
 
     <div class="status-grid">
-        <div>💰 <span id="coins">0</span></div>
+        <div>💰 <span id="coins-display">0</span></div>
         <div>🌊 Onda: <span id="wave">1</span></div>
         <div>⚔️ Dano: <span id="damage">1</span></div>
         <div>❤️ Vida: <span id="vida">10</span></div>
     </div>
 
     <div class="controls">
-        <button onclick="move('L')">⬅️ ESQ</button>
+        <button onclick="move('L')">⬅️</button>
         <button onclick="document.getElementById('store').style.display='block'">🛒 LOJA</button>
-        <button onclick="move('R')">DIR ➡️</button>
+        <button onclick="move('R')">➡️</button>
         <button id="attack-button" onclick="shootBullet()">🔥 ATACAR</button>
+        <button id="focus-btn" onclick="startFocusAttack()">🎯 FOCO (DPS)</button>
         <button id="super-button" onclick="activateSuper()">✨ SUPER<div id="super-bar"></div></button>
-        <button onclick="togglePause()" style="grid-column:1/4">⏸️ PAUSAR</button>
+        <button onclick="togglePause()" style="grid-column:1/4">⏸️ PAUSAR / DESPAUSAR</button>
     </div>
 
     <div id="store">
         <h3 style="color:orange">LOJA</h3>
-        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO - 10💰</button>
-        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA - 15💰</button>
-        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('shield')">ESCUDO - 20💰</button>
-        <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">PET - 150💰</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('shield')">ESCUDO (20💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
 
     <script>
         let totalCoins = parseInt(localStorage.getItem("gs_coins")) || 0;
         let petOwned = localStorage.getItem("gs_pet") === "true";
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, superCharge=0, bulletSpd=15, hits=0;
+        let hasShieldSkill = localStorage.getItem("gs_shield_skill") === "true"; // Salva se já comprou escudo antes
+
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, superCharge=0, bulletSpd=15, isFocusing=false;
         
-        const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
+        const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), laser=document.getElementById("laser");
         const area=document.getElementById("game-area"), pet=document.getElementById("pet"), bZombie=document.getElementById("zombie-bullet");
 
-        function init() { document.getElementById("lobby-coins").textContent = totalCoins; applySkin(); updateHUD(); }
-        function startGame() { document.getElementById("main-menu").classList.add("hidden"); paused=false; coins=0; wave=1; playerHP=10; resetEnemy(); updateHUD(); }
+        function init() { 
+            document.getElementById("lobby-coins").textContent = totalCoins; 
+            updateHUD(); 
+        }
+
+        function startGame(fullReset) {
+            document.getElementById("main-menu").classList.add("hidden");
+            paused = false;
+            coins = 0;
+            wave = 1;
+            playerHP = 10;
+            damage = 1;
+            superCharge = 0;
+
+            if(fullReset) {
+                // Se for Novo Jogo, perde as habilidades da sessão (mas mantém o que tá no localStorage)
+                shieldHP = 0;
+            } else {
+                // Se for Continuar, inicia com escudo se já tiver a habilidade salva
+                if(hasShieldSkill) shieldHP = 5;
+            }
+
+            resetEnemy();
+            updateHUD();
+        }
         
         function updateHUD() {
             document.getElementById("vida").textContent = playerHP;
-            document.getElementById("coins").textContent = totalCoins + coins;
+            document.getElementById("coins-display").textContent = totalCoins + coins;
             document.getElementById("wave").textContent = wave;
             document.getElementById("damage").textContent = damage;
-            let max = (wave%10==0?wave*5:5+wave*2);
+            
+            let max = (wave%10==0 ? wave*5 : 5+wave*2);
             document.getElementById("enemyHPFill").style.width = (zombieHP/max*100) + "%";
-            document.getElementById("enemyHPText").textContent = zombieHP + " HP";
+            document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
             document.getElementById("super-bar").style.width = superCharge + "%";
             document.getElementById("super-button").classList.toggle("ready", superCharge >= 100);
+            
             pet.style.display = petOwned ? "block" : "none";
+            document.getElementById("shield").style.display = shieldHP > 0 ? "block" : "none";
         }
 
         function resetEnemy() {
-            zombie.className = ""; zombieHP = (wave%10==0?wave*5:5+wave*2);
-            if(wave==40) { zombie.style.background="purple"; zombie.classList.add("scientist-coat"); }
-            else if(wave%10==0) { zombie.style.background="black"; }
-            else { zombie.style.background="green"; }
-            area.className = (wave>50?"inferno":wave>20?"forest":"");
-            hits = 0; updateHUD();
+            zombieHP = (wave%10==0 ? wave*5 : 5+wave*2);
+            area.className = (wave>50 ? "inferno" : wave>20 ? "forest" : "");
+            updateHUD();
         }
 
         function shootBullet(isSuper=false, off=0, isPet=false) {
             if(paused) return;
-            if(!isSuper && !isPet && document.querySelectorAll(".bullet").length >= 1) return;
+            if(!isSuper && !isPet && document.querySelectorAll(".bullet").length >= 2) return;
+            
             const b = document.createElement("div");
             b.className = "bullet";
-            b.style.left = (isPet?pet.offsetLeft+5:player.offsetLeft+12+off)+"px";
-            b.style.top = (isPet?pet.offsetTop:260)+"px";
+            b.style.left = (isPet ? pet.offsetLeft+5 : player.offsetLeft+12+off) + "px";
+            b.style.top = (isPet ? pet.offsetTop : 260) + "px";
             area.appendChild(b);
+            
             let pos = parseInt(b.style.top);
             let m = setInterval(() => {
                 if(paused) return;
                 let zL = zGroup.offsetLeft + 15;
                 if(pos<=45 && pos>=10 && parseInt(b.style.left)+6>=zL && parseInt(b.style.left)<=zL+30) {
-                    clearInterval(m); b.remove(); zombieHP -= (isPet?1:damage);
-                    if(!isPet) { superCharge = Math.min(100, superCharge+5); hits++; if(hits>=3){ moveZ(); hits=0; } }
-                    if(zombieHP<=0){ coins+=(wave%10==0?50:5); wave++; resetEnemy(); }
-                    updateHUD();
+                    clearInterval(m); b.remove();
+                    zombieHP -= (isPet ? 1 : damage);
+                    if(!isPet) superCharge = Math.min(100, superCharge+5);
+                    checkZombieDeath();
                 } else if(pos<=-20){ clearInterval(m); b.remove(); }
                 else { pos-=(isPet?10:bulletSpd); b.style.top=pos+"px"; }
             }, 25);
         }
 
-        function moveZ() { let n = zGroup.offsetLeft+(Math.random()>0.5?60:-60); zGroup.style.left = Math.max(0, Math.min(n, 240))+"px"; }
-        function activateSuper() { if(superCharge<100||paused) return; superCharge=0; [-20,-10,0,10,20].forEach(o=>shootBullet(true,o)); updateHUD(); }
+        function startFocusAttack() {
+            if(paused || isFocusing) return;
+            isFocusing = true;
+            let focusTicks = 0;
+            laser.style.display = "block";
+
+            let interval = setInterval(() => {
+                if(paused) return;
+                laser.style.left = (player.offsetLeft + 12) + "px";
+                laser.style.bottom = "40px";
+                laser.style.height = "260px";
+
+                let zL = zGroup.offsetLeft + 15;
+                let pL = player.offsetLeft + 12;
+                if(pL >= zL - 5 && pL <= zL + 35) {
+                    zombieHP -= (damage * 0.2); // Dano por tique
+                    checkZombieDeath();
+                }
+
+                focusTicks++;
+                if(focusTicks >= 30) { 
+                    clearInterval(interval); 
+                    laser.style.display = "none"; 
+                    isFocusing = false; 
+                }
+            }, 100);
+        }
+
+        function checkZombieDeath() {
+            if(zombieHP <= 0) {
+                coins += (wave % 10 == 0 ? 50 : 5);
+                wave++;
+                resetEnemy();
+                moveZ();
+            }
+            updateHUD();
+        }
+
+        function moveZ() { 
+            let n = Math.random() * 240;
+            zGroup.style.left = n + "px"; 
+        }
+
+        function activateSuper() { 
+            if(superCharge < 100 || paused) return; 
+            superCharge = 0; 
+            [-20, -10, 0, 10, 20].forEach(o => shootBullet(true, o)); 
+            updateHUD(); 
+        }
 
         function zombieAttack() {
             if(paused || bZombie.style.display=="block") return;
@@ -162,24 +235,68 @@
                 let pL = player.offsetLeft;
                 if(pos>=270 && pos<=295 && parseInt(bZombie.style.left)+10>pL && parseInt(bZombie.style.left)<pL+30) {
                     clearInterval(m); bZombie.style.display="none";
-                    if(shieldHP>0){ shieldHP--; if(shieldHP<=0)document.getElementById("shield").style.display="none"; }
-                    else { playerHP--; if(playerHP<=0) die(); }
+                    if(shieldHP > 0) { 
+                        shieldHP--; 
+                    } else { 
+                        playerHP--; 
+                        if(playerHP <= 0) die(); 
+                    }
                     updateHUD();
                 } else if(pos>=310){ clearInterval(m); bZombie.style.display="none"; }
                 else { pos+=10; bZombie.style.top=pos+"px"; }
             }, 50);
         }
 
-        function die() { paused=true; totalCoins+=coins; localStorage.setItem("gs_coins", totalCoins); document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
-        function backToLobby() { document.getElementById("game-over").classList.add("hidden"); document.getElementById("main-menu").classList.remove("hidden"); init(); }
-        function move(d) { if(!paused){ player.style.left=(d=='L'?Math.max(0,player.offsetLeft-30):Math.min(270,player.offsetLeft+30))+"px"; document.getElementById("shield").style.left=(player.offsetLeft-10)+"px"; if(petOwned){pet.style.left=(player.offsetLeft-20)+"px"; pet.style.top=(player.offsetTop-10)+"px";}} }
-        function buyUpgrade(t) { if(t=='dmg'&&totalCoins+coins>=10){totalCoins-=10; damage++;} if(t=='hp'&&totalCoins+coins>=15){totalCoins-=15; playerHP+=5;} if(t=='shield'&&totalCoins+coins>=20){totalCoins-=20; shieldHP=5; document.getElementById("shield").style.display="block";} updateHUD(); }
-        function buyItem(t) { if(t=='pet'&&totalCoins+coins>=150){totalCoins-=150; petOwned=true; localStorage.setItem("gs_pet","true");} updateHUD(); }
-        function togglePause() { paused=!paused; }
-        function applySkin() { player.style.background="red"; }
+        function die() { 
+            paused = true; 
+            totalCoins += coins; 
+            localStorage.setItem("gs_coins", totalCoins); 
+            document.getElementById("death-stats").textContent = `VOCÊ CHEGOU NA ONDA: ${wave}`; 
+            document.getElementById("game-over").classList.remove("hidden"); 
+        }
+
+        function backToLobby() { 
+            document.getElementById("game-over").classList.add("hidden"); 
+            document.getElementById("main-menu").classList.remove("hidden"); 
+            init(); 
+        }
+
+        function move(d) { 
+            if(!paused) {
+                player.style.left=(d=='L' ? Math.max(0, player.offsetLeft-30) : Math.min(270, player.offsetLeft+30)) + "px"; 
+                document.getElementById("shield").style.left = (player.offsetLeft - 10) + "px";
+                if(petOwned) { 
+                    pet.style.left = (player.offsetLeft - 20) + "px"; 
+                    pet.style.top = (player.offsetTop - 10) + "px"; 
+                }
+            } 
+        }
+
+        function buyUpgrade(t) { 
+            if(t=='dmg' && totalCoins+coins >= 10){ if(totalCoins >= 10) totalCoins-=10; else coins-=10; damage++; } 
+            if(t=='hp' && totalCoins+coins >= 15){ if(totalCoins >= 15) totalCoins-=15; else coins-=15; playerHP+=5; } 
+            if(t=='shield' && totalCoins+coins >= 20){ 
+                if(totalCoins >= 20) totalCoins-=20; else coins-=20; 
+                shieldHP = 5; 
+                hasShieldSkill = true;
+                localStorage.setItem("gs_shield_skill", "true");
+            } 
+            updateHUD(); 
+        }
+
+        function buyItem(t) { 
+            if(t=='pet' && totalCoins+coins >= 150){ 
+                if(totalCoins >= 150) totalCoins-=150; else coins-=150; 
+                petOwned=true; 
+                localStorage.setItem("gs_pet","true"); 
+            } 
+            updateHUD(); 
+        }
+
+        function togglePause() { paused = !paused; }
 
         setInterval(zombieAttack, 2000);
-        setInterval(() => { if(petOwned&&!paused) shootBullet(false,0,true); }, 5000);
+        setInterval(() => { if(petOwned && !paused) shootBullet(false, 0, true); }, 5000);
         init();
     </script>
 </body>
