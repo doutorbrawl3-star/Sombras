@@ -3,87 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="icon" type="image/jpeg" href="bico.jpg">
+    <link rel="apple-touch-icon" href="bico.jpg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ff0000">
+
     <title>Guerreiro das Sombras Pro</title>
     <style>
-        body { background: #000; color: white; font-family: 'Courier New', Courier, monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; }
+        body { background: #000; color: white; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; }
         
-        /* TELAS (MENUS E OVERLAYS) */
+        /* TELAS */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
         
         .menu-btn { width: 220px; padding: 15px; margin: 10px; background: #111; border: 2px solid #ff0000; color: white; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; }
-        .menu-btn:active { background: #440000; }
 
         /* SKINS */
-        .skin-card { width: 80px; height: 80px; border: 3px solid #444; margin: 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .skin-container { display: flex; flex-wrap: wrap; justify-content: center; max-width: 300px; }
+        .skin-card { width: 80px; height: 100px; border: 3px solid #444; margin: 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .skin-card.selected { border-color: lime; box-shadow: 0 0 10px lime; }
-        .skin-price { font-size: 10px; color: gold; margin-top: 5px; }
-        .skin-preview { width: 25px; height: 25px; border-radius: 4px; }
+        .skin-preview { width: 30px; height: 30px; border-radius: 4px; }
+        .skin-price { font-size: 11px; color: gold; margin-top: 5px; }
 
-        /* JOGO */
+        /* GAME AREA */
         #game-area { width: 300px; height: 300px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; }
-        #player { width: 30px; height: 30px; background: red; bottom: 10px; left: 135px; border-radius: 4px; position: absolute; z-index: 3; }
+        #player { width: 30px; height: 30px; position: absolute; z-index: 3; border-radius: 4px; transition: background 0.3s; }
         
-        #zombie-group { position: absolute; width: 60px; height: 55px; top: 10px; left: 120px; transition: left 0.2s ease-out; display: flex; flex-direction: column; align-items: center; }
+        #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.2s ease-out; display: flex; flex-direction: column; align-items: center; }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; position: relative; }
-        
         .scientist-coat::after { content: ""; position: absolute; top: 5px; left: 5px; width: 20px; height: 25px; background: white; border-radius: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%, 70% 100%, 50% 70%, 30% 100%, 0 100%); }
 
         #enemyHPContainer { width: 60px; height: 16px; background: #333; border: 1px solid #000; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
-        #enemyHPFill { height: 100%; background: lime; width: 100%; transition: width 0.2s; }
+        #enemyHPFill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 9px; }
 
-        .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 2; border-radius: 2px; }
-        #zombie-bullet { width: 10px; height: 10px; background: #ffa500; border-radius: 50%; position: absolute; display: none; }
-        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; left: 125px; bottom: 0px; z-index: 1; display: none; border: 3px solid cyan; }
-        .particle { position: absolute; width: 5px; height: 5px; z-index: 1; transition: all 0.5s ease-out; }
+        .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 2; border-radius: 2px; box-shadow: 0 0 5px yellow; }
+        #zombie-bullet { width: 10px; height: 10px; background: orange; border-radius: 50%; position: absolute; display: none; z-index: 2; }
+        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; z-index: 1; display: none; border: 3px solid cyan; }
+        .particle { position: absolute; width: 5px; height: 5px; z-index: 1; pointer-events: none; }
 
-        /* HUD */
+        /* HUD & CONTROLS */
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 300px; margin: 10px auto; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
         button { padding: 15px 5px; font-size: 14px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #attack-button { grid-column: 1 / 3; background: #ff4444; }
-        #super-button { background: #444; grid-column: 3 / 4; position: relative; overflow: hidden; }
+        #attack-button { grid-column: 1 / 3; background: #ff4444; font-size: 18px; }
+        #super-button { grid-column: 3 / 4; background: #444; position: relative; overflow: hidden; }
         #super-bar { position: absolute; bottom: 0; left: 0; width: 0%; height: 5px; background: cyan; }
-        #super-button.ready { background: #005555; animation: glow 1s infinite; }
-        @keyframes glow { 0% { box-shadow: 0 0 5px cyan; } 50% { box-shadow: 0 0 15px cyan; } 100% { box-shadow: 0 0 5px cyan; } }
+        #super-button.ready { background: #005555; box-shadow: 0 0 10px cyan; }
 
-        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1000; width: 280px; }
+        #store { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid white; padding: 15px; z-index: 1500; width: 280px; }
     </style>
 </head>
 <body>
 
     <div id="main-menu" class="overlay">
-        <h1 style="color: red;">GUERREIRO DAS SOMBRAS</h1>
-        <div style="color: gold; margin-bottom: 10px;">MOEDAS: 💰 <span id="lobby-coins">0</span></div>
+        <h1 style="color: red; font-size: 30px;">GUERREIRO DAS SOMBRAS</h1>
+        <div style="color: gold; margin-bottom: 15px;">SALDO: 💰 <span id="lobby-coins">0</span></div>
         <button class="menu-btn" onclick="startGame()">JOGAR</button>
         <button class="menu-btn" onclick="openSkins()">SKINS</button>
     </div>
 
     <div id="skins-menu" class="overlay hidden">
-        <h1>SKINS</h1>
-        <div style="display: flex; justify-content: center;">
-            <div class="skin-card" id="skin-default" onclick="buySkin('default', 0)">
+        <h1>LOJA DE SKINS</h1>
+        <div class="skin-container">
+            <div class="skin-card" id="skin-default" onclick="selectSkin('default', 0)">
                 <div class="skin-preview" style="background: red;"></div>
                 <div class="skin-price">GRÁTIS</div>
             </div>
-            <div class="skin-card" id="skin-shadow" onclick="buySkin('shadow', 100)">
+            <div class="skin-card" id="skin-shadow" onclick="selectSkin('shadow', 100)">
                 <div class="skin-preview" style="background: black; border: 2px solid red;"></div>
                 <div class="skin-price">100 💰</div>
             </div>
-            <div class="skin-card" id="skin-gold" onclick="buySkin('gold', 500)">
-                <div class="skin-preview" style="background: gold;"></div>
+            <div class="skin-card" id="skin-gold" onclick="selectSkin('gold', 500)">
+                <div class="skin-preview" style="background: gold; box-shadow: 0 0 10px gold;"></div>
                 <div class="skin-price">500 💰</div>
             </div>
         </div>
-        <button class="menu-btn" onclick="closeSkins()">VOLTAR</button>
+        <button class="menu-btn" onclick="closeSkins()" style="margin-top: 20px;">VOLTAR</button>
     </div>
 
     <div id="game-over" class="overlay hidden">
-        <h1 style="color: red; font-size: 35px;">VOCÊ MORREU!</h1>
-        <div style="font-size: 20px; margin: 10px;">ONDA: <span id="final-wave">0</span></div>
-        <div style="font-size: 20px; margin: 10px; color: gold;">MOEDAS: +<span id="earned-coins">0</span></div>
-        <button class="menu-btn" onclick="backToLobby()">VOLTAR AO LOBBY</button>
+        <h1 style="color: red; font-size: 35px;">GAME OVER</h1>
+        <div id="death-stats" style="font-size: 20px; margin: 15px;"></div>
+        <button class="menu-btn" onclick="backToLobby()">LOBBY</button>
     </div>
 
     <h1>GUERREIRO DAS SOMBRAS</h1>
@@ -117,24 +122,27 @@
     </div>
 
     <div id="store">
-        <h3>🛒 LOJA DE UPGRADES</h3>
+        <h3 style="color: orange;">🛒 LOJA DE UPGRADES</h3>
         <button style="width:100%; margin: 5px 0;" onclick="buyUpgrade('dmg')">⚔️ DANO (+1) - 10💰</button>
         <button style="width:100%; margin: 5px 0;" onclick="buyUpgrade('hp')">❤️ VIDA (+5) - 15💰</button>
         <button style="width:100%; margin: 5px 0;" onclick="buyUpgrade('shield')">🛡️ ESCUDO - 20💰</button>
-        <button style="width:100%; background: red;" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
+        <button style="width:100%; margin: 5px 0;" onclick="buyUpgrade('speed')">⚡ VELOCIDADE - 30💰</button>
+        <button style="width:100%; background: red; margin-top: 10px;" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
 
     <script>
-        // CARREGAR DADOS SALVOS
+        // CARREGAMENTO DE DADOS
         let totalCoins = parseInt(localStorage.getItem("gs_total_coins")) || 0;
         let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_skins")) || ["default"];
         let currentSkin = localStorage.getItem("gs_active_skin") || "default";
 
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, superCharge=0;
-        let zombieHP=5, hitsCounter=0, shootSpeed=25, bulletId=0;
+        // VARIÁVEIS DE JOGO
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, shieldLevel=0;
+        let zombieHP=5, hitsCounter=0, shootSpeed=25, superCharge=0, bulletSpd=15;
+        const shieldColors = ["cyan", "lime", "orange", "blue", "purple"];
 
         const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
-        const gameArea=document.getElementById("game-area"), shield=document.getElementById("shield");
+        const gameArea=document.getElementById("game-area"), shield=document.getElementById("shield"), bZombie=document.getElementById("zombie-bullet");
 
         function initLobby() {
             document.getElementById("lobby-coins").textContent = totalCoins;
@@ -143,8 +151,9 @@
 
         function startGame() {
             document.getElementById("main-menu").classList.add("hidden");
-            paused = false;
-            coins = 0; wave = 1; damage = 1; playerHP = 10; shieldHP = 0;
+            paused = false; coins = 0; wave = 1; damage = 1; playerHP = 10; 
+            shieldHP = 0; shieldLevel = 0; superCharge = 0; shootSpeed = 25; bulletSpd = 15;
+            shield.style.display = "none";
             resetEnemy();
             updateHUD();
         }
@@ -159,20 +168,37 @@
             document.getElementById("coins").textContent = totalCoins + coins;
             document.getElementById("wave").textContent = wave;
             document.getElementById("damage").textContent = damage;
-            let maxHP = (wave % 10 === 0) ? (wave * 5) : (5 + wave * 2);
+            
+            let maxHP = (wave === 30) ? 100 : (wave === 40) ? 150 : (5 + wave * 2);
             document.getElementById("enemyHPFill").style.width = (zombieHP / maxHP * 100) + "%";
             document.getElementById("enemyHPText").textContent = zombieHP + " HP";
+            
             document.getElementById("super-bar").style.width = superCharge + "%";
             document.getElementById("super-button").classList.toggle("ready", superCharge >= 100);
         }
 
         function resetEnemy() {
-            zombie.className = "";
-            zombieHP = (wave % 10 === 0) ? (wave * 5) : (5 + wave * 2);
-            if(wave === 40) { zombie.style.background="purple"; zombie.classList.add("scientist-coat"); }
+            zombie.className = ""; zombie.style.width="30px"; zombie.style.height="30px";
+            zombieHP = (wave === 30) ? 100 : (wave === 40) ? 150 : (5 + wave * 2);
+            
+            if(wave === 30) { zombie.style.background="repeating-linear-gradient(45deg,#000,#000 5px,#fff 5px,#fff 10px)"; }
+            else if(wave === 40) { zombie.style.background="purple"; zombie.classList.add("scientist-coat"); }
             else if(wave % 10 === 0) { zombie.style.background="black"; zombie.style.border="2px solid white"; }
             else { zombie.style.background="green"; }
+            hitsCounter = 0;
             updateHUD();
+        }
+
+        function explode(x, y, color) {
+            for(let i=0; i<12; i++) {
+                const p = document.createElement("div");
+                p.className = "particle"; p.style.background = color || "green";
+                p.style.left = x + "px"; p.style.top = y + "px";
+                gameArea.appendChild(p);
+                const vx = (Math.random()-0.5)*10, vy = (Math.random()-0.5)*10;
+                setTimeout(() => { p.style.transform = `translate(${vx*10}px, ${vy*10}px)`; p.style.opacity = "0"; }, 10);
+                setTimeout(() => p.remove(), 500);
+            }
         }
 
         function shootBullet(isSuper=false, offset=0) {
@@ -194,22 +220,20 @@
                     zombieHP -= damage;
                     if(superCharge < 100) superCharge += 5;
                     hitsCounter++;
-                    if(hitsCounter >= 3) { moveZombie(); hitsCounter=0; }
+                    if(hitsCounter >= 3) { 
+                        let n = zGroup.offsetLeft + (Math.random() > 0.5 ? 60 : -60);
+                        zGroup.style.left = Math.max(0, Math.min(n, 240)) + "px";
+                        hitsCounter=0; 
+                    }
                     if(zombieHP <= 0) {
                         explode(zGroup.offsetLeft + 30, 25, zombie.style.background);
                         coins += (wave % 10 === 0) ? 50 : 5;
-                        wave++;
-                        resetEnemy();
+                        wave++; resetEnemy();
                     }
                     updateHUD();
                 } else if(pos <= 0) { clearInterval(move); b.remove(); }
-                else { pos -= 15; b.style.top = pos + "px"; }
+                else { pos -= bulletSpd; b.style.top = pos + "px"; }
             }, shootSpeed);
-        }
-
-        function moveZombie() {
-            let n = zGroup.offsetLeft + (Math.random() > 0.5 ? 60 : -60);
-            zGroup.style.left = Math.max(0, Math.min(n, 240)) + "px";
         }
 
         function activateSuper() {
@@ -219,23 +243,8 @@
             updateHUD();
         }
 
-        function explode(x, y, color) {
-            for(let i=0; i<10; i++) {
-                const p = document.createElement("div");
-                p.className = "particle";
-                p.style.background = color || "green";
-                p.style.left = x + "px"; p.style.top = y + "px";
-                gameArea.appendChild(p);
-                setTimeout(() => {
-                    p.style.transform = `translate(${(Math.random()-0.5)*100}px, ${(Math.random()-0.5)*100}px)`;
-                    p.style.opacity = "0";
-                }, 10);
-                setTimeout(() => p.remove(), 600);
-            }
-        }
-
         function zombieAttack() {
-            if(paused || bZombie.style.display === "block") return;
+            if(paused || bZombie.style.display === "block" || wave === 15) return;
             bZombie.style.display="block"; bZombie.style.left=(zGroup.offsetLeft+25)+"px"; bZombie.style.top="40px";
             let pos=40;
             let move = setInterval(() => {
@@ -243,7 +252,11 @@
                 let pL = player.offsetLeft;
                 if(pos>=270 && pos<=290 && parseInt(bZombie.style.left)+10 > pL && parseInt(bZombie.style.left) < pL+30) {
                     clearInterval(move); bZombie.style.display="none";
-                    if(shieldHP > 0) { shieldHP--; if(shieldHP<=0) shield.style.display="none"; }
+                    if(shieldHP > 0) { 
+                        shieldHP--; 
+                        explode(pL+15, 280, "cyan");
+                        if(shieldHP<=0) shield.style.display="none"; 
+                    }
                     else { playerHP--; if(playerHP <= 0) die(); }
                     updateHUD();
                 } else if(pos>=310) { clearInterval(move); bZombie.style.display="none"; }
@@ -252,11 +265,9 @@
         }
 
         function die() {
-            paused = true;
-            totalCoins += coins;
+            paused = true; totalCoins += coins;
             localStorage.setItem("gs_total_coins", totalCoins);
-            document.getElementById("final-wave").textContent = wave;
-            document.getElementById("earned-coins").textContent = coins;
+            document.getElementById("death-stats").innerHTML = `ONDA: ${wave}<br>MOEDAS: +${coins}💰`;
             document.getElementById("game-over").classList.remove("hidden");
         }
 
@@ -268,44 +279,57 @@
 
         // SKINS
         function openSkins() {
+            document.getElementById("main-menu").classList.add("hidden");
             document.getElementById("skins-menu").classList.remove("hidden");
-            document.querySelectorAll(".skin-card").forEach(c => {
-                c.classList.toggle("selected", c.id === "skin-" + currentSkin);
-            });
+            updateSkinsVisual();
         }
-        function closeSkins() { document.getElementById("skins-menu").classList.add("hidden"); }
+        function closeSkins() { document.getElementById("skins-menu").classList.add("hidden"); document.getElementById("main-menu").classList.remove("hidden"); }
 
-        function buySkin(id, price) {
+        function selectSkin(id, price) {
             if(ownedSkins.includes(id)) {
                 currentSkin = id;
             } else if(totalCoins >= price) {
-                totalCoins -= price;
-                ownedSkins.push(id);
-                currentSkin = id;
+                totalCoins -= price; ownedSkins.push(id); currentSkin = id;
                 localStorage.setItem("gs_total_coins", totalCoins);
                 localStorage.setItem("gs_owned_skins", JSON.stringify(ownedSkins));
             }
             localStorage.setItem("gs_active_skin", currentSkin);
-            initLobby();
-            openSkins();
+            applySkin(currentSkin);
+            updateSkinsVisual();
+            document.getElementById("lobby-coins").textContent = totalCoins;
+        }
+
+        function updateSkinsVisual() {
+            document.querySelectorAll(".skin-card").forEach(c => {
+                c.classList.toggle("selected", c.id === "skin-" + currentSkin);
+                if(ownedSkins.includes(c.id.replace("skin-",""))) {
+                    c.querySelector(".skin-price").textContent = "COMPRADO";
+                    c.querySelector(".skin-price").style.color = "lime";
+                }
+            });
         }
 
         function applySkin(id) {
-            player.style = ""; player.style.position = "absolute"; player.style.width="30px"; player.style.height="30px"; player.style.bottom="10px"; player.style.left="135px";
-            if(id === "shadow") { player.style.background="black"; player.style.border="2px solid red"; }
-            else if(id === "gold") { player.style.background="gold"; player.style.boxShadow="0 0 10px gold"; }
-            else { player.style.background="red"; }
+            player.style.background = (id==="shadow") ? "black" : (id==="gold") ? "gold" : "red";
+            player.style.border = (id==="shadow") ? "2px solid red" : "none";
+            player.style.boxShadow = (id==="gold") ? "0 0 10px gold" : "none";
+            player.style.left = "135px"; player.style.bottom = "10px";
         }
 
         function buyUpgrade(type) {
             if(type==='dmg' && coins >= 10) { coins-=10; damage++; }
             if(type==='hp' && coins >= 15) { coins-=15; playerHP+=5; }
-            if(type==='shield' && coins >= 20) { coins-=20; shieldHP=5; shield.style.display="block"; }
+            if(type==='speed' && coins >= 30) { coins-=30; bulletSpd += 2; shootSpeed = Math.max(10, shootSpeed-3); }
+            if(type==='shield' && coins >= 20) { 
+                coins-=20; shieldLevel++; shieldHP = shieldLevel * 3;
+                shield.style.display="block";
+                shield.style.borderColor = shieldColors[Math.min(shieldLevel-1, 4)];
+            }
             updateHUD();
         }
 
-        document.getElementById("left-button").onclick=()=> { if(!paused) player.style.left=Math.max(0, player.offsetLeft-30)+"px"; shield.style.left=(player.offsetLeft-10)+"px"; };
-        document.getElementById("right-button").onclick=()=> { if(!paused) player.style.left=Math.min(270, player.offsetLeft+30)+"px"; shield.style.left=(player.offsetLeft-10)+"px"; };
+        document.getElementById("left-button").onclick=()=> { if(!paused) { player.style.left=Math.max(0, player.offsetLeft-30)+"px"; shield.style.left=(player.offsetLeft-10)+"px"; shield.style.bottom="0px"; } };
+        document.getElementById("right-button").onclick=()=> { if(!paused) { player.style.left=Math.min(270, player.offsetLeft+30)+"px"; shield.style.left=(player.offsetLeft-10)+"px"; shield.style.bottom="0px"; } };
 
         setInterval(zombieAttack, 2000);
         initLobby();
