@@ -18,7 +18,7 @@
         .focus-ball { position: absolute; width: 15px; height: 15px; background: #8e44ad; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; z-index: 6; }
         .zombie-burning { filter: drop-shadow(0 0 10px #8e44ad) hue-rotate(280deg); }
 
-        #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.2s; display: flex; flex-direction: column; align-items: center; z-index: 4; }
+        #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; }
         #enemyHPContainer { width: 60px; height: 16px; background: #333; border: 1px solid #000; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; }
@@ -145,18 +145,23 @@
                 if(paused) return;
                 let pos = parseInt(b.style.top);
                 let zL = zGroup.offsetLeft + 15;
+                
+                // Colisão com o Zumbi
                 if(pos<=45 && pos>=10 && parseInt(b.style.left)+6>=zL && parseInt(b.style.left)<=zL+30) {
                     clearInterval(m); b.remove();
                     zombieHP -= damage;
+                    
+                    // MECÂNICA DOS 3 TIROS PARA MUDAR DE LUGAR
                     playerHits++;
                     if(playerHits >= 3) {
                         zGroup.style.left = (Math.random() * 240) + "px";
                         playerHits = 0;
                     }
+
                     superCharge = Math.min(100, superCharge+5);
                     checkDeath();
                 } else if(pos<=-20){ clearInterval(m); b.remove(); }
-                else { b.style.top = (pos-12) + "px"; } // VELOCIDADE PLAYER AJUSTADA (12)
+                else { b.style.top = (pos-10) + "px"; } // SUA VELOCIDADE (10)
             }, 25);
         }
 
@@ -174,7 +179,7 @@
                 if(pos<=45 && pos>=10 && parseInt(ball.style.left)+15>=zL && parseInt(ball.style.left)<=zL+30) {
                     clearInterval(m); ball.remove(); applyFocusDamage();
                 } else if(pos<=-20){ clearInterval(m); ball.remove(); }
-                else { ball.style.top = (pos-10) + "px"; }
+                else { ball.style.top = (pos-8) + "px"; }
             }, 30);
         }
 
@@ -211,7 +216,7 @@
                     if(shieldHP > 0) { shieldHP--; } else { playerHP--; if(playerHP<=0) die(); }
                     updateHUD();
                 } else if(pos>=310){ clearInterval(m); bZombie.style.display="none"; }
-                else { pos+=7; bZombie.style.top=pos+"px"; } // VELOCIDADE ZUMBI AJUSTADA (7)
+                else { pos+=8; bZombie.style.top=pos+"px"; } // VELOCIDADE ZUMBI (8)
             }, 40);
         }
 
