@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        let petOwned, focusOwned, shieldSkill;
+        let petOwned = false, focusOwned = false, shieldSkill = false;
         let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, superCharge=0;
         
         const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
@@ -98,20 +98,24 @@
 
         function startGame(fullReset) {
             if(fullReset) {
-                localStorage.clear(); // Apaga tudo para começar do zero real
+                // Limpa TUDO para começar do zero absoluto
+                localStorage.clear(); 
                 petOwned = false; focusOwned = false; shieldSkill = false;
+                shieldHP = 0;
             } else {
+                // Recupera o que foi comprado na última vez
                 petOwned = localStorage.getItem("gs_pet") === "true";
                 focusOwned = localStorage.getItem("gs_focus") === "true";
                 shieldSkill = localStorage.getItem("gs_shield_skill") === "true";
+                shieldHP = shieldSkill ? 5 : 0;
             }
 
             document.getElementById("main-menu").classList.add("hidden");
             paused = false; coins = 0; wave = 1; playerHP = 10; damage = 1; superCharge = 0;
-            shieldHP = (!fullReset && shieldSkill) ? 5 : 0;
             
-            // Posiciona o pet corretamente se ele existir
-            if(petOwned) { pet.style.display = "block"; pet.style.left = "140px"; pet.style.top = "260px"; }
+            // Garante que o pet comece escondido até ser comprado (ou recuperado no Continuar)
+            pet.style.display = petOwned ? "block" : "none";
+            if(petOwned) { pet.style.left = "140px"; pet.style.top = "260px"; }
             
             resetEnemy(); 
             updateHUD();
@@ -203,9 +207,7 @@
 
         function zombieAttack() {
             if(paused || bZombie.style.display=="block") return;
-            bZombie.style.display="block"; 
-            bZombie.style.left=(zGroup.offsetLeft+25)+"px"; 
-            bZombie.style.top="40px";
+            bZombie.style.display="block"; bZombie.style.left=(zGroup.offsetLeft+25)+"px"; bZombie.style.top="40px";
             let pos=40;
             let m = setInterval(() => {
                 if(paused) return;
@@ -215,7 +217,7 @@
                     if(shieldHP > 0) { shieldHP--; } else { playerHP--; if(playerHP<=0) die(); }
                     updateHUD();
                 } else if(pos>=310){ clearInterval(m); bZombie.style.display="none"; }
-                else { pos+=5; bZombie.style.top=pos+"px"; } // Velocidade reduzida para 5
+                else { pos+=5; bZombie.style.top=pos+"px"; }
             }, 50);
         }
 
@@ -250,7 +252,7 @@
             if(coins >= cost) {
                 coins -= cost;
                 if(t=='focus') { focusOwned=true; localStorage.setItem("gs_focus","true"); }
-                if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); pet.style.display="block"; }
+                if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); }
                 updateHUD();
             }
         }
@@ -260,7 +262,6 @@
         function backToLobby() { document.getElementById("game-over").classList.add("hidden"); document.getElementById("main-menu").classList.remove("hidden"); }
 
         setInterval(zombieAttack, 3000);
-        updateHUD();
     </script>
 </body>
 </html>
