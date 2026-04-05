@@ -26,8 +26,11 @@
         .sheze-bullet { background: #a0f; width: 4px; height: 10px; }
         .vrack-bullet { background: #f00; width: 14px; height: 14px; border-radius: 50%; }
         
+        .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
+
         #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; }
+        .z-burning { filter: hue-rotate(280deg) brightness(1.5); }
         
         #enemyHPContainer { width: 70px; height: 16px; background: #333; border: 1px solid #fff; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
@@ -84,7 +87,8 @@
         <button onclick="document.getElementById('store').style.display='block'">🛒 LOJA</button>
         <button onclick="move('R')">➡️</button>
         <button id="attack-button" style="grid-column: 1/3; background: #f44;" onclick="shootBullet()">🔥 ATACAR</button>
-        <button onclick="activateSuper()">✨ SUPER<div id="super-bar-container"><div id="super-bar-fill"></div></div></button>
+        <button id="focus-btn" style="display:none" onclick="shootFocusBall()">🔮 FOCO</button>
+        <button id="super-button" onclick="activateSuper()">✨ SUPER<div id="super-bar-container"><div id="super-bar-fill"></div></div></button>
     </div>
 
     <div id="skins-menu">
@@ -98,6 +102,7 @@
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('shield')">ESCUDO (20💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">FOCO (100💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
@@ -113,7 +118,7 @@
         let currentSkinId = localStorage.getItem("gs_current_id") || "zark";
         let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_ids")) || ["zark"];
         let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, playerHits=0;
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, focusOwned=false, playerHits=0;
 
         const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), area=document.getElementById("game-area"), shield=document.getElementById("shield");
 
@@ -145,6 +150,7 @@
             document.getElementById("vida").textContent = playerHP; document.getElementById("coins-display").textContent = coins;
             document.getElementById("wave").textContent = wave; document.getElementById("damage").textContent = damage;
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
+            document.getElementById("focus-btn").style.display = focusOwned ? "block" : "none";
             document.getElementById("enemyHPFill").style.width = (zombieHP/zombieMaxHP)*100 + "%";
             document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
             if(shieldHP > 0) { shield.style.display="block"; shield.style.left=(document.getElementById("player").offsetLeft-5)+"px"; shield.style.top=(document.getElementById("player").offsetTop-5)+"px"; } else { shield.style.display="none"; }
@@ -183,7 +189,7 @@
                 if(top <= 60 && top >= 10 && left >= zGroup.offsetLeft && left <= zGroup.offsetLeft + 60) {
                     clearInterval(m); b.remove();
                     zombieHP -= (customDmg || damage);
-                    playerHits++; // CONTA O TIRO PARA O MOVIMENTO
+                    playerHits++; 
                     if(playerHits >= 3) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
                     if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; localStorage.setItem("gs_sombrios", sombrios); showRewardEffect(); resetEnemy(); }
@@ -191,6 +197,28 @@
                 } else if(top < -20 || left < -20 || left > 320) { clearInterval(m); b.remove(); }
                 else { b.style.top = (top - 12) + "px"; b.style.left = (left + angle) + "px"; }
             }, 25);
+        }
+
+        function shootFocusBall() {
+            if(paused || !focusOwned || document.querySelector(".focus-ball")) return;
+            const b = document.createElement("div"); b.className = "focus-ball";
+            b.style.left = (document.getElementById("player").offsetLeft + 12) + "px";
+            b.style.top = "300px"; area.appendChild(b);
+
+            let m = setInterval(() => {
+                if(paused) return;
+                let top = parseInt(b.style.top);
+                if(top <= 60 && top >= 10 && parseInt(b.style.left) >= zGroup.offsetLeft && parseInt(b.style.left) <= zGroup.offsetLeft + 60) {
+                    clearInterval(m); b.remove();
+                    zombie.classList.add("z-burning");
+                    let ticks = 0;
+                    let burn = setInterval(() => {
+                        zombieHP -= (damage * 0.5); updateHUD(); ticks++;
+                        if(ticks >= 15 || zombieHP <= 0) { clearInterval(burn); zombie.classList.remove("z-burning"); if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; localStorage.setItem("gs_sombrios", sombrios); showRewardEffect(); resetEnemy(); } }
+                    }, 200);
+                } else if(top < -20) { clearInterval(m); b.remove(); }
+                else b.style.top = (top - 8) + "px";
+            }, 30);
         }
 
         function activateSuper() {
@@ -209,6 +237,7 @@
         
         function buyItem(t) {
             if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; }
+            if(t==='focus' && coins>=100) { coins-=100; focusOwned=true; }
             if(t==='pet' && coins>=150) { coins-=150; petOwned=true; }
             updateHUD();
         }
