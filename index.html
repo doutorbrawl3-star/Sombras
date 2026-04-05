@@ -17,11 +17,9 @@
         #player { width: 40px; height: 40px; position: absolute; bottom: 10px; left: 130px; z-index: 5; }
         #player img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 0 5px red); }
 
-        /* Ícone Sombrio */
         .sombrio-icon { display: inline-block; width: 14px; height: 14px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: inset 0 0 5px #000; }
         .sombrio-icon::after { content: 'S'; font-size: 9px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #bbb; font-weight: bold; }
 
-        /* Animação de Ganhar Sombrios */
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 20px; pointer-events: none; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
         @keyframes floatUp {
             0% { opacity: 1; transform: translate(-50%, -50%); }
@@ -35,6 +33,7 @@
 
         #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; transition: filter 0.2s; }
+        .z-burning { filter: hue-rotate(280deg) brightness(1.5); }
 
         #enemyHPContainer { width: 70px; height: 16px; background: #333; border: 1px solid #fff; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
@@ -124,6 +123,8 @@
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('shield')">ESCUDO (20💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">🔮 FOCO (100💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">🐶 PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
 
@@ -131,7 +132,7 @@
         let petOwned = false, focusOwned = false, shieldSkill = false;
         let ownedSkins = ["https://i.ibb.co/WWhT8VPG/bico.jpg"];
         let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0;
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, playerHits=0;
         let canShoot = true;
         
         const player=document.getElementById("player"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
@@ -203,6 +204,7 @@
             document.getElementById("coins-display").textContent = coins;
             document.getElementById("wave").textContent = wave;
             document.getElementById("damage").textContent = damage;
+            document.getElementById("focus-btn").style.display = focusOwned ? "block" : "none";
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
             let percent = (zombieHP / zombieMaxHP) * 100;
             document.getElementById("enemyHPFill").style.width = Math.max(0, percent) + "%";
@@ -218,6 +220,7 @@
             zombieMaxHP = (wave % 10 === 0) ? (wave * 5) : (5 + wave * 2);
             zombieHP = zombieMaxHP;
             zGroup.style.left = "120px";
+            playerHits = 0; // Reseta contador de tiros
             zombie.style.background = (wave % 10 === 0) ? "purple" : "green";
             updateHUD();
         }
@@ -237,6 +240,8 @@
                 if(pos <= 60 && pos >= 10 && parseInt(b.style.left) >= zL && parseInt(b.style.left) <= zL + 60) {
                     clearInterval(m); b.remove();
                     zombieHP -= damage;
+                    playerHits++; // Conta o tiro
+                    if(playerHits >= 3) { zGroup.style.left = (Math.random()*240)+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
                     if(zombieHP <= 0) { 
                         spawnDrop(zL+30, 40); 
@@ -251,6 +256,38 @@
                 } else if(pos <= -20) { clearInterval(m); b.remove(); }
                 else b.style.top = (pos - 12) + "px";
             }, 25);
+        }
+
+        function shootFocusBall() {
+            if(paused || !focusOwned || document.querySelector(".focus-ball")) return;
+            const ball = document.createElement("div");
+            ball.className = "focus-ball";
+            ball.style.left = (player.offsetLeft + 12) + "px";
+            ball.style.top = (player.offsetTop - 15) + "px";
+            area.appendChild(ball);
+            let m = setInterval(() => {
+                if(paused) return;
+                let pos = parseInt(ball.style.top);
+                let zL = zGroup.offsetLeft;
+                if(pos <= 60 && pos >= 10 && parseInt(ball.style.left) >= zL && parseInt(ball.style.left) <= zL + 60) {
+                    clearInterval(m); ball.remove();
+                    zombie.classList.add("z-burning");
+                    let ticks = 0;
+                    let burn = setInterval(() => {
+                        zombieHP -= (damage * 0.5); updateHUD(); ticks++;
+                        if(ticks >= 15 || zombieHP <= 0) { 
+                            clearInterval(burn); zombie.classList.remove("z-burning");
+                            if(zombieHP <= 0) { 
+                                coins += 10; sombrios += 5; wave++; 
+                                localStorage.setItem("gs_sombrios", sombrios); 
+                                showRewardEffect();
+                                resetEnemy(); 
+                            }
+                        }
+                    }, 200);
+                } else if(pos <= -20) { clearInterval(m); ball.remove(); }
+                else ball.style.top = (pos - 8) + "px";
+            }, 30);
         }
 
         function spawnDrop(x, y) {
@@ -299,6 +336,7 @@
 
         function startLoops() {
             setInterval(() => { if(!paused) zombieAttack(); }, 2000);
+            setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000); // Pet atira a cada 5s
         }
 
         function move(d) {
@@ -313,16 +351,38 @@
             if(coins >= cost) { coins -= cost; if(t=='dmg') damage++; if(t=='hp') playerHP += 5; if(t=='shield') { shieldHP=5; shieldSkill=true; localStorage.setItem("gs_shield_skill","true"); } updateHUD(); }
         }
 
-        function activateSuper() {
+        function buyItem(t) {
+            let cost = (t=='focus'?100 : 150);
+            if(coins >= cost) { 
+                coins -= cost; 
+                if(t=='focus') { focusOwned=true; localStorage.setItem("gs_focus","true"); } 
+                if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); } 
+                updateHUD(); 
+            }
+        }
+
+                function activateSuper() {
             if(superCharge < 100 || paused) return;
             superCharge = 0;
+            // O Super atira várias balas em leque
             for(let i = -60; i <= 60; i += 20) shootBullet(true, i);
             updateHUD();
         }
 
-        function togglePause() { paused = !paused; }
-        function die() { paused=true; document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); document.getElementById("menu-sombrios").textContent = sombrios; }
-        function backToLobby() { location.reload(); }
+        function togglePause() { 
+            paused = !paused; 
+        }
+
+        function die() { 
+            paused = true; 
+            document.getElementById("death-stats").textContent = `ONDA: ${wave}`; 
+            document.getElementById("game-over").classList.remove("hidden"); 
+            document.getElementById("menu-sombrios").textContent = sombrios; 
+        }
+
+        function backToLobby() { 
+            location.reload(); 
+        }
     </script>
 </body>
 </html>
