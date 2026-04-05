@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta name="theme-color" content="#ff0000">
+    <meta name="theme-color" content="#ff0000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Guerreiro das Sombras Pro</title>
 
-<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
 
     <style>
         body { background: #000; color: white; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none; }
@@ -15,7 +15,21 @@
         .menu-btn { width: 220px; padding: 15px; margin: 10px; background: #111; border: 2px solid #f00; color: #fff; font-size: 18px; font-weight: bold; border-radius: 10px; }
         
         #game-area { width: 300px; height: 350px; background: #111; margin: 10px auto; position: relative; overflow: hidden; border: 2px solid #333; border-radius: 8px; }
-        #player { width: 30px; height: 30px; position: absolute; bottom: 10px; left: 135px; border-radius: 4px; z-index: 5; background: red; }
+        
+        /* ALTERAÇÃO: Player agora usa imagem e é um pouco maior */
+        #player { 
+            width: 40px; 
+            height: 40px; 
+            position: absolute; 
+            bottom: 10px; 
+            left: 130px; 
+            z-index: 5; 
+        }
+        #player img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
         
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
@@ -30,7 +44,7 @@
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 10px; z-index: 10; }
 
-        #shield { position: absolute; width: 46px; height: 46px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; box-shadow: 0 0 10px cyan; pointer-events: none; }
+        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; box-shadow: 0 0 10px cyan; pointer-events: none; }
 
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
@@ -60,7 +74,9 @@
     </div>
 
     <div id="game-area">
-        <div id="player"></div>
+        <div id="player">
+            <img src="https://i.ibb.co/WWhT8VPG/bico.jpg" alt="Personagem">
+        </div>
         <div id="shield"></div>
         <div id="zombie-group">
             <div id="zombie"></div>
@@ -133,8 +149,8 @@
             
             if(shieldHP > 0) {
                 shield.style.display = "block";
-                shield.style.left = (player.offsetLeft - 8) + "px";
-                shield.style.top = (player.offsetTop - 8) + "px";
+                shield.style.left = (player.offsetLeft - 5) + "px";
+                shield.style.top = (player.offsetTop - 5) + "px";
             } else { shield.style.display = "none"; }
         }
 
@@ -153,7 +169,8 @@
             
             const b = document.createElement("div");
             b.className = "bullet";
-            b.style.left = (player.offsetLeft + 12 + off) + "px";
+            // ALTERAÇÃO: Ajustado o offset do tiro (+17) para alinhar com o novo tamanho do boneco
+            b.style.left = (player.offsetLeft + 17 + off) + "px";
             b.style.top = (player.offsetTop - 10) + "px";
             area.appendChild(b);
 
@@ -178,7 +195,7 @@
             if(paused || !focusOwned || document.querySelector(".focus-ball")) return;
             const ball = document.createElement("div");
             ball.className = "focus-ball";
-            ball.style.left = (player.offsetLeft + 7) + "px";
+            ball.style.left = (player.offsetLeft + 12) + "px";
             ball.style.top = (player.offsetTop - 15) + "px";
             area.appendChild(ball);
 
@@ -217,9 +234,8 @@
             let m = setInterval(() => {
                 if(paused) return;
                 pos += 4; item.style.top = pos + "px";
-                // Colisão com o player
                 let pL = player.offsetLeft;
-                if(pos >= 310 && pos <= 345 && parseInt(item.style.left) >= pL - 10 && parseInt(item.style.left) <= pL + 35) {
+                if(pos >= 310 && pos <= 345 && parseInt(item.style.left) >= pL - 10 && parseInt(item.style.left) <= pL + 45) {
                     clearInterval(m); item.remove();
                     if(type === "❤️") playerHP = Math.min(20, playerHP + 3);
                     else superCharge = 100;
@@ -239,7 +255,7 @@
             let m = setInterval(() => {
                 if(paused) return;
                 let pL = player.offsetLeft;
-                if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL + 30) {
+                if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL + 40) {
                     clearInterval(m); zb.remove();
                     if(shieldHP > 0) shieldHP--; else { playerHP--; if(playerHP <= 0) die(); }
                     updateHUD();
@@ -256,7 +272,7 @@
         function move(d) {
             if(paused) return;
             let cur = player.offsetLeft;
-            player.style.left = (d === 'L' ? Math.max(0, cur - 30) : Math.min(270, cur + 30)) + "px";
+            player.style.left = (d === 'L' ? Math.max(0, cur - 30) : Math.min(260, cur + 30)) + "px";
             updateHUD();
         }
 
