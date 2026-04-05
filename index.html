@@ -19,9 +19,9 @@
         #player { width: 40px; height: 40px; position: absolute; bottom: 10px; left: 130px; z-index: 5; }
         #player img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 0 5px red); }
 
-        /* Estilo da Moeda Sombrios */
-        .sombrio-icon { display: inline-block; width: 12px; height: 12px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; }
-        .sombrio-icon::after { content: 'S'; font-size: 8px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ccc; }
+        /* Ícone Sombrio (Moeda de Menu) */
+        .sombrio-icon { display: inline-block; width: 14px; height: 14px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: inset 0 0 5px #000; }
+        .sombrio-icon::after { content: 'S'; font-size: 9px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #bbb; font-weight: bold; }
 
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
@@ -50,16 +50,17 @@
         
         #store, #skins-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; }
         .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
-        .skin-card img { width: 30px; height: 30px; border-radius: 50%; }
+        .skin-card img { width: 35px; height: 35px; border-radius: 50%; background: #222; }
     </style>
 </head>
 <body>
 
     <div id="main-menu" class="overlay">
         <h1 style="color:red">GUERREIRO DAS SOMBRAS</h1>
+        <div style="margin-bottom:10px"><div class="sombrio-icon"></div> Sombrios: <span id="menu-sombrios">0</span></div>
         <button class="menu-btn" onclick="startGame(true)">NOVO JOGO</button>
         <button class="menu-btn" style="border-color:cyan" onclick="startGame(false)">CONTINUAR</button>
-        <button class="menu-btn" style="border-color:orange" onclick="document.getElementById('skins-menu').style.display='block'">MINHAS SOMBRAS</button>
+        <button class="menu-btn" style="border-color:orange" onclick="openSkins()">MINHAS SOMBRAS</button>
     </div>
 
     <div id="game-over" class="overlay hidden">
@@ -83,7 +84,7 @@
     </div>
 
     <div class="status-grid">
-        <div><div class="sombrio-icon"></div> Sombrios: <span id="coins-display">0</span></div>
+        <div>💰 Moedas: <span id="coins-display">0</span></div>
         <div>🌊 Onda: <span id="wave">1</span></div>
         <div>⚔️ Dano: <span id="damage">1</span></div>
         <div>❤️ Vida: <span id="vida">10</span></div>
@@ -107,26 +108,27 @@
             <button onclick="selectSkin('https://i.ibb.co/WWhT8VPG/bico.jpg')">USAR</button>
         </div>
         <div class="skin-card">
-            <img src="https://i.ibb.co/V99v98p/shelly.png">
+            <img src="https://raw.githubusercontent.com/pizofreak/BrawlStarsAssets/master/Brawlers/Icons/Shelly.png">
             <span>Shelly</span>
-            <button id="buy-shelly-btn" onclick="buySkin('shelly', 35, 'https://i.ibb.co/V99v98p/shelly.png')">35 <div class="sombrio-icon"></div></button>
+            <button id="buy-shelly-btn" onclick="buySkin('shelly', 35, 'https://raw.githubusercontent.com/pizofreak/BrawlStarsAssets/master/Brawlers/Icons/Shelly.png')">35 <div class="sombrio-icon"></div></button>
         </div>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('skins-menu').style.display='none'">FECHAR</button>
     </div>
 
     <div id="store">
         <h3 style="color:orange">LOJA</h3>
-        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10 <div class="sombrio-icon"></div>)</button>
-        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15 <div class="sombrio-icon"></div>)</button>
-        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('shield')">ESCUDO (20 <div class="sombrio-icon"></div>)</button>
-        <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">🔮 FOCO (100 <div class="sombrio-icon"></div>)</button>
-        <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">🐶 PET (150 <div class="sombrio-icon"></div>)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('shield')">ESCUDO (20💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">🔮 FOCO (100💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">🐶 PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
 
     <script>
         let petOwned = false, focusOwned = false, shieldSkill = false;
         let ownedSkins = ["https://i.ibb.co/WWhT8VPG/bico.jpg"];
+        let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
         let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, playerHits=0;
         let canShoot = true;
         
@@ -134,38 +136,38 @@
         const area=document.getElementById("game-area"), shield=document.getElementById("shield");
         const pImg=document.getElementById("player-img");
 
-        // Carregar Skins do LocalStorage
+        document.getElementById("menu-sombrios").textContent = sombrios;
         if(localStorage.getItem("gs_skins")) ownedSkins = JSON.parse(localStorage.getItem("gs_skins"));
         if(localStorage.getItem("gs_current_skin")) pImg.src = localStorage.getItem("gs_current_skin");
 
+        function openSkins() {
+            updateSkinButtons();
+            document.getElementById('skins-menu').style.display='block';
+        }
+
         function startGame(fullReset) {
             if(fullReset) { 
-                localStorage.clear(); 
+                localStorage.removeItem("gs_pet"); localStorage.removeItem("gs_focus"); localStorage.removeItem("gs_shield_skill");
                 petOwned=false; focusOwned=false; shieldSkill=false; 
-                ownedSkins = ["https://i.ibb.co/WWhT8VPG/bico.jpg"];
-                pImg.src = "https://i.ibb.co/WWhT8VPG/bico.jpg";
-            }
-            else { 
+            } else { 
                 petOwned = localStorage.getItem("gs_pet") === "true";
                 focusOwned = localStorage.getItem("gs_focus") === "true";
                 shieldSkill = localStorage.getItem("gs_shield_skill") === "true";
-                coins = parseInt(localStorage.getItem("gs_coins")) || 0;
             }
             document.getElementById("main-menu").classList.add("hidden");
-            paused = false; wave = 1; playerHP = 10; damage = 1; superCharge = 0;
+            paused = false; wave = 1; playerHP = 10; damage = 1; superCharge = 0; coins = 0;
             shieldHP = (!fullReset && shieldSkill) ? 5 : 0;
-            updateSkinButtons();
             resetEnemy(); updateHUD(); startLoops();
         }
 
         function buySkin(name, cost, url) {
-            if(coins >= cost && !ownedSkins.includes(url)) {
-                coins -= cost;
+            if(sombrios >= cost && !ownedSkins.includes(url)) {
+                sombrios -= cost;
                 ownedSkins.push(url);
                 localStorage.setItem("gs_skins", JSON.stringify(ownedSkins));
-                localStorage.setItem("gs_coins", coins);
+                localStorage.setItem("gs_sombrios", sombrios);
+                document.getElementById("menu-sombrios").textContent = sombrios;
                 updateSkinButtons();
-                updateHUD();
             }
         }
 
@@ -178,10 +180,11 @@
         }
 
         function updateSkinButtons() {
+            const shellyUrl = "https://raw.githubusercontent.com/pizofreak/BrawlStarsAssets/master/Brawlers/Icons/Shelly.png";
             const btn = document.getElementById("buy-shelly-btn");
-            if(ownedSkins.includes("https://i.ibb.co/V99v98p/shelly.png")) {
+            if(ownedSkins.includes(shellyUrl)) {
                 btn.textContent = "USAR";
-                btn.onclick = () => selectSkin("https://i.ibb.co/V99v98p/shelly.png");
+                btn.onclick = () => selectSkin(shellyUrl);
             }
         }
 
@@ -192,11 +195,9 @@
             document.getElementById("damage").textContent = damage;
             document.getElementById("focus-btn").style.display = focusOwned ? "block" : "none";
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
-            
             let percent = (zombieHP / zombieMaxHP) * 100;
             document.getElementById("enemyHPFill").style.width = Math.max(0, percent) + "%";
             document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
-            
             if(shieldHP > 0) {
                 shield.style.display = "block";
                 shield.style.left = (player.offsetLeft - 5) + "px";
@@ -233,9 +234,10 @@
                     superCharge = Math.min(100, superCharge + 5);
                     if(zombieHP <= 0) { 
                         spawnDrop(zL+30, 40); 
-                        coins += 5; // GANHA 5 SOMBRIOS POR ONDA
+                        coins += 10; // Moedas da partida
+                        sombrios += 5; // Sombrios fixos por onda
+                        localStorage.setItem("gs_sombrios", sombrios);
                         wave++; 
-                        localStorage.setItem("gs_coins", coins);
                         resetEnemy(); 
                     }
                     updateHUD();
@@ -263,7 +265,7 @@
                         zombieHP -= (damage * 0.5); updateHUD(); ticks++;
                         if(ticks >= 15 || zombieHP <= 0) { 
                             clearInterval(burn); zombie.classList.remove("z-burning");
-                            if(zombieHP <= 0) { coins += 5; wave++; localStorage.setItem("gs_coins", coins); resetEnemy(); }
+                            if(zombieHP <= 0) { coins += 10; sombrios += 5; wave++; localStorage.setItem("gs_sombrios", sombrios); resetEnemy(); }
                         }
                     }, 200);
                 } else if(pos <= -20) { clearInterval(m); ball.remove(); }
@@ -329,12 +331,12 @@
 
         function buyUpgrade(t) {
             let cost = (t=='dmg'?10 : t=='hp'?15 : 20);
-            if(coins >= cost) { coins -= cost; if(t=='dmg') damage++; if(t=='hp') playerHP += 5; if(t=='shield') { shieldHP=5; shieldSkill=true; localStorage.setItem("gs_shield_skill","true"); } localStorage.setItem("gs_coins", coins); updateHUD(); }
+            if(coins >= cost) { coins -= cost; if(t=='dmg') damage++; if(t=='hp') playerHP += 5; if(t=='shield') { shieldHP=5; shieldSkill=true; localStorage.setItem("gs_shield_skill","true"); } updateHUD(); }
         }
 
         function buyItem(t) {
             let cost = (t=='focus'?100 : 150);
-            if(coins >= cost) { coins -= cost; if(t=='focus') { focusOwned=true; localStorage.setItem("gs_focus","true"); } if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); } localStorage.setItem("gs_coins", coins); updateHUD(); }
+            if(coins >= cost) { coins -= cost; if(t=='focus') { focusOwned=true; localStorage.setItem("gs_focus","true"); } if(t=='pet') { petOwned=true; localStorage.setItem("gs_pet","true"); } updateHUD(); }
         }
 
         function activateSuper() {
@@ -345,9 +347,8 @@
         }
 
         function togglePause() { paused = !paused; }
-        function die() { paused=true; document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
+        function die() { paused=true; document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); document.getElementById("menu-sombrios").textContent = sombrios; }
         function backToLobby() { location.reload(); }
-        updateSkinButtons();
     </script>
 </body>
 </html>
