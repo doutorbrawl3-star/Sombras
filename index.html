@@ -36,6 +36,8 @@
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 10px; z-index: 10; }
 
+        #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; box-shadow: 0 0 10px cyan; pointer-events: none; }
+
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 300px; margin: 0 auto; font-size: 12px; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
         
@@ -66,6 +68,7 @@
 
     <div id="game-area">
         <div id="player"><img id="player-img" src="https://i.ibb.co/WWhT8VPG/bico.jpg"></div>
+        <div id="shield"></div>
         <div id="zombie-group">
             <div id="zombie"></div>
             <div id="enemyHPContainer"><div id="enemyHPFill"></div><div id="enemyHPText">0 HP</div></div>
@@ -99,7 +102,9 @@
         <h3 style="color:orange">LOJA</h3>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyUpgrade('shield')">ESCUDO (20💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">🔮 FOCO (100💰)</button>
+        <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">🐶 PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
 
@@ -113,10 +118,10 @@
 
         let ownedSkins = ["https://i.ibb.co/WWhT8VPG/bico.jpg"];
         let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, zombieHP=5, zombieMaxHP=5, superCharge=0, playerHits=0, focusOwned=false, isZombieSlow=false;
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, playerHits=0, focusOwned=false, petOwned=false, shieldSkill=false, isZombieSlow=false;
         let canShoot = true;
 
-        const pImg=document.getElementById("player-img"), area=document.getElementById("game-area"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie");
+        const pImg=document.getElementById("player-img"), area=document.getElementById("game-area"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie"), shield=document.getElementById("shield");
 
         if(localStorage.getItem("gs_skins")) ownedSkins = JSON.parse(localStorage.getItem("gs_skins"));
         if(localStorage.getItem("gs_current_skin")) pImg.src = localStorage.getItem("gs_current_skin");
@@ -151,7 +156,7 @@
         function startGame(reset) {
             document.getElementById("main-menu").classList.add("hidden");
             paused = false; wave = 1; playerHP = 10; coins = 0; damage = 1; superCharge = 0;
-            if(reset) focusOwned = false;
+            if(reset) { focusOwned = false; petOwned = false; shieldHP = 0; }
             resetEnemy(); updateHUD(); startLoops();
         }
 
@@ -164,6 +169,11 @@
             document.getElementById("focus-btn").style.display = focusOwned ? "block" : "none";
             document.getElementById("enemyHPFill").style.width = (zombieHP/zombieMaxHP)*100 + "%";
             document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
+            if(shieldHP > 0) {
+                shield.style.display = "block";
+                shield.style.left = (document.getElementById("player").offsetLeft - 5) + "px";
+                shield.style.top = (document.getElementById("player").offsetTop - 5) + "px";
+            } else { shield.style.display = "none"; }
         }
 
         function resetEnemy() {
@@ -174,16 +184,21 @@
 
         function shootBullet(isSuper=false, off=0, angle=0, customDmg=null) {
             if(paused || (!isSuper && !canShoot)) return;
-            if(!isSuper) { canShoot=false; setTimeout(()=>canShoot=true, 500); }
 
             const skin = pImg.src;
-            // Lógica de tiros especiais por personagem
+            // AJUSTE DE COOLDOWN: Mais devagar para personagens fortes
+            if(!isSuper) {
+                canShoot = false;
+                let cooldown = (skin.includes("thumbnail.png") || skin.includes("character-thumbnail.png")) ? 1200 : 500;
+                setTimeout(() => canShoot = true, cooldown);
+            }
+
             if(!isSuper && off === 0) {
                 if(skin.includes("dexyz")) { shootBullet(true, -10); shootBullet(true, 10); return; }
                 if(skin.includes("thumbnail.png")) { // Sheze
                     shootBullet(true, 0); setTimeout(()=>shootBullet(true,0), 150); setTimeout(()=>shootBullet(true,0), 300); return;
                 }
-                if(skin.includes("character-thumbnail.png")) { // Vrack (Dano dobrado)
+                if(skin.includes("character-thumbnail.png")) { // Vrack
                     shootBullet(true, 0, 0, damage * 2); return;
                 }
             }
@@ -218,15 +233,15 @@
             if(superCharge < 100 || paused) return;
             superCharge = 0;
             const skin = pImg.src;
-            if(skin.includes("character-thumbnail.png")) { // Vrack Bombardeio
+            if(skin.includes("character-thumbnail.png")) {
                 for(let i=-40; i<=40; i+=20) shootBullet(true, i, 0, damage*3);
-            } else if(skin.includes("thumbnail.png")) { // Sheze Vírus
+            } else if(skin.includes("thumbnail.png")) {
                 zombie.classList.add("z-slow"); isZombieSlow = true;
                 setTimeout(() => { zombie.classList.remove("z-slow"); isZombieSlow = false; }, 3000);
                 zombieHP -= (damage * 5);
             } else if(skin.includes("dexyz")) {
                 for(let i=-6; i<=6; i+=2) shootBullet(true, 0, i);
-            } else { // Zark
+            } else {
                 for(let i=-60; i<=60; i+=20) shootBullet(true, i);
             }
             updateHUD();
@@ -240,12 +255,22 @@
         function move(d) {
             let cur = document.getElementById("player").offsetLeft;
             document.getElementById("player").style.left = (d==='L'?Math.max(0,cur-30):Math.min(260,cur+30))+"px";
+            updateHUD();
         }
 
-        function buyUpgrade(t) { if(coins>=10) { coins-=10; if(t==='dmg') damage++; else playerHP+=5; updateHUD(); } }
-        function buyItem(t) { if(coins>=100) { coins-=100; focusOwned=true; updateHUD(); } }
+        function buyUpgrade(t) { 
+            let cost = (t==='dmg' ? 10 : 15);
+            if(coins >= cost) { coins -= cost; if(t==='dmg') damage++; else playerHP += 5; updateHUD(); }
+        }
+        
+        function buyItem(t) { 
+            if(t==='shield') { if(coins>=20) { coins-=20; shieldHP=5; updateHUD(); } }
+            if(t==='focus') { if(coins>=100) { coins-=100; focusOwned=true; updateHUD(); } }
+            if(t==='pet') { if(coins>=150) { coins-=150; petOwned=true; updateHUD(); } }
+        }
+
         function togglePause() { paused = !paused; }
-        function die() { paused=true; document.getElementById("game-over").classList.remove("hidden"); }
+        function die() { paused=true; document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
         function backToLobby() { location.reload(); }
         
         function startLoops() {
@@ -258,10 +283,13 @@
                     pos += (isZombieSlow ? 3 : 7); zb.style.top = pos + "px";
                     let pL = document.getElementById("player").offsetLeft;
                     if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL+40) {
-                        clearInterval(m); zb.remove(); playerHP--; if(playerHP<=0) die(); updateHUD();
+                        clearInterval(m); zb.remove(); 
+                        if(shieldHP > 0) shieldHP--; else playerHP--; 
+                        if(playerHP<=0) die(); updateHUD();
                     } else if(pos > 360) { clearInterval(m); zb.remove(); }
                 }, 40);
             }}, 2000);
+            setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000);
         }
     </script>
 </body>
