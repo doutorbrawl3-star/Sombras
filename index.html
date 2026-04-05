@@ -15,11 +15,9 @@
         #player { width: 40px; height: 40px; position: absolute; bottom: 10px; left: 130px; z-index: 5; }
         #player img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 0 5px red); }
 
-        /* Desenho Bonitinho da Moeda Sombrios */
         .sombrio-icon { display: inline-block; width: 16px; height: 16px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: inset 0 0 5px #000; }
         .sombrio-icon::after { content: 'S'; font-size: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #bbb; font-weight: bold; }
 
-        /* Animação do +5 Sombrios */
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 22px; pointer-events: none; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -150%); } }
 
@@ -100,7 +98,6 @@
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('shield')">ESCUDO (20💰)</button>
-        <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">FOCO (100💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
@@ -116,7 +113,7 @@
         let currentSkinId = localStorage.getItem("gs_current_id") || "zark";
         let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_ids")) || ["zark"];
         let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false;
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, playerHits=0;
 
         const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), area=document.getElementById("game-area"), shield=document.getElementById("shield");
 
@@ -153,11 +150,10 @@
             if(shieldHP > 0) { shield.style.display="block"; shield.style.left=(document.getElementById("player").offsetLeft-5)+"px"; shield.style.top=(document.getElementById("player").offsetTop-5)+"px"; } else { shield.style.display="none"; }
         }
 
-        function resetEnemy() { zombieMaxHP = 5 + (wave * 2); zombieHP = zombieMaxHP; zGroup.style.left = "120px"; updateHUD(); }
+        function resetEnemy() { zombieMaxHP = 5 + (wave * 2); zombieHP = zombieMaxHP; zGroup.style.left = "120px"; playerHits = 0; updateHUD(); }
 
         function showRewardEffect() {
-            const r = document.createElement("div"); r.className = "floating-reward"; 
-            r.innerHTML = `+5 <div class="sombrio-icon"></div>`;
+            const r = document.createElement("div"); r.className = "floating-reward"; r.innerHTML = `+5 <div class="sombrio-icon"></div>`;
             area.appendChild(r); setTimeout(() => r.remove(), 1200);
         }
 
@@ -187,6 +183,8 @@
                 if(top <= 60 && top >= 10 && left >= zGroup.offsetLeft && left <= zGroup.offsetLeft + 60) {
                     clearInterval(m); b.remove();
                     zombieHP -= (customDmg || damage);
+                    playerHits++; // CONTA O TIRO PARA O MOVIMENTO
+                    if(playerHits >= 3) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
                     if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; localStorage.setItem("gs_sombrios", sombrios); showRewardEffect(); resetEnemy(); }
                     updateHUD();
