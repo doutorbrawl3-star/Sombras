@@ -21,9 +21,18 @@
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 20px; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -150%); } }
 
-        /* Estilos dos Projéteis */
+        /* Estilos de Tiros */
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
-        .dexyz-bullet { background: cyan; width: 10px; height: 5px; box-shadow: 0 0 8px cyan; }
+        
+        /* TIRO DO DEXYZ (DISCO) */
+        .dexyz-bullet { 
+            background: #0ff; 
+            width: 14px; 
+            height: 6px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 10px #0ff, 0 0 5px white; 
+        }
+
         .sheze-bullet { background: #a0f; width: 4px; height: 10px; box-shadow: 0 0 5px #a0f; }
         .vrack-bullet { background: #f00; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px #f00; }
         
@@ -171,24 +180,27 @@
             const skin = pImg.src;
             if(!isSuper) {
                 canShoot = false;
-                let cd = (skin.includes("thumbnail.png") || skin.includes("character-thumbnail.png")) ? 1200 : 500;
+                let cd = (skin.includes("704/727") || skin.includes("341/329")) ? 1200 : 500;
                 setTimeout(() => canShoot = true, cd);
             }
 
-            // LÓGICA DE TIROS ÚNICOS
+            // MECÂNICA DE ATAQUE ÚNICO
             if(!isSuper && off === 0) {
-                if(skin.includes("dexyz")) { shootBullet(true, -12); shootBullet(true, 12); return; } // DEXYZ 2 TIROS
-                if(skin.includes("704/727")) { shootBullet(true, 0); setTimeout(()=>shootBullet(true,0),150); setTimeout(()=>shootBullet(true,0),300); return; } // SHEZE 3 TIROS
-                if(skin.includes("341/329")) { shootBullet(true, 0, 0, damage*2); return; } // VRACK DANO 2X
+                if(skin.includes("dexyz")) { // DEXYZ ATIRA 2 DISCOS
+                    shootBullet(true, -12); shootBullet(true, 12); return; 
+                }
+                if(skin.includes("704/727")) { shootBullet(true, 0); setTimeout(()=>shootBullet(true,0),150); setTimeout(()=>shootBullet(true,0),300); return; }
+                if(skin.includes("341/329")) { shootBullet(true, 0, 0, damage*2); return; }
             }
 
             const b = document.createElement("div");
-            b.className = "bullet";
-            if(skin.includes("dexyz")) b.classList.add("dexyz-bullet");
+            // DEFINE SE É DISCO OU BALA
+            b.className = skin.includes("dexyz") ? "bullet dexyz-bullet" : "bullet";
+            
             if(skin.includes("704/727")) b.classList.add("sheze-bullet");
             if(skin.includes("341/329")) b.classList.add("vrack-bullet");
 
-            b.style.left = (document.getElementById("player").offsetLeft + 17 + off) + "px";
+            b.style.left = (document.getElementById("player").offsetLeft + (skin.includes("dexyz") ? 13 : 17) + off) + "px";
             b.style.top = "300px";
             area.appendChild(b);
 
@@ -212,13 +224,14 @@
             if(superCharge < 100 || paused) return;
             superCharge = 0;
             const skin = pImg.src;
-            if(skin.includes("dexyz")) { // SUPER DEXYZ: TEMPESTADE CIRCULAR
-                for(let i=-10; i<=10; i+=2) shootBullet(true, 0, i);
-            } else if(skin.includes("704/727")) { // SHEZE VIRUS
+            if(skin.includes("dexyz")) { 
+                // SUPER DO DEXYZ: ANEL DE PLASMA (TIROS EM TODOS OS ÂNGULOS)
+                for(let i=-12; i<=12; i+=3) shootBullet(true, 0, i);
+            } else if(skin.includes("704/727")) {
                 zombie.classList.add("z-slow"); isZombieSlow=true; setTimeout(()=>{zombie.classList.remove("z-slow"); isZombieSlow=false;},3000); zombieHP -= (damage*5);
-            } else if(skin.includes("341/329")) { // VRACK BOMBARDEIO
+            } else if(skin.includes("341/329")) {
                 for(let i=-40; i<=40; i+=20) shootBullet(true, i, 0, damage*4);
-            } else { // ZARK LEQUE
+            } else {
                 for(let i=-60; i<=60; i+=20) shootBullet(true, i);
             }
             updateHUD();
@@ -239,7 +252,7 @@
         }
 
         function togglePause() { paused = !paused; }
-        function die() { paused=true; document.getElementById("game-over").classList.remove("hidden"); }
+        function die() { paused=true; document.getElementById("death-stats").textContent=`ONDA: ${wave}`; document.getElementById("game-over").classList.remove("hidden"); }
         function backToLobby() { location.reload(); }
         
         function startLoops() {
