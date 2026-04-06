@@ -21,8 +21,18 @@
         .trofeu-icon { display: inline-block; width: 18px; height: 18px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: 0 0 5px #000; }
         .trofeu-icon::after { content: '🏆'; font-size: 10px; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); filter: grayscale(1); }
 
+        /* Estilo das Missões */
+        #missions-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #f00; padding: 15px; z-index: 2600; width: 300px; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
+        .mission-card { background: #222; padding: 10px; margin: 8px 0; border-radius: 5px; border-left: 4px solid orange; text-align: left; }
+        .mission-card.weekly { border-left-color: cyan; }
+        .mission-card h4 { margin: 0; font-size: 14px; color: #eee; }
+        .mission-card .progress-bar { width: 100%; height: 8px; background: #444; margin-top: 5px; border-radius: 4px; overflow: hidden; }
+        .mission-card .progress-fill { height: 100%; background: orange; width: 0%; transition: 0.3s; }
+        .mission-card.weekly .progress-fill { background: cyan; }
+        .btn-collect { background: #0f0; color: #000; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; margin-top: 5px; cursor: pointer; width: 100%; }
+
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 22px; pointer-events: none; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -150%); } }
+        @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translateY(-100px); opacity: 0; } }
 
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .disco-dexyz { background: #0ff; width: 18px; height: 6px; border-radius: 10px; box-shadow: 0 0 10px #0ff; }
@@ -55,7 +65,6 @@
         .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
         .skin-card img { width: 35px; height: 35px; }
         .skin-info { display: flex; flex-direction: column; align-items: flex-start; flex: 1; margin-left: 10px; text-align: left; }
-        .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
     </style>
 </head>
 <body>
@@ -67,7 +76,18 @@
             <div><div class="trofeu-icon"></div> <span id="menu-poder-total">0</span></div>
         </div>
         <button class="menu-btn" onclick="startGame()">JOGAR</button>
-        <button class="menu-btn" style="border-color:orange" onclick="openSkins()">MINHAS SOMBRAS</button>
+        <div style="display:flex; justify-content:center; width:250px;">
+             <button class="menu-btn" style="width:110px; font-size:12px; border-color:orange" onclick="openSkins()">SOMBRAS</button>
+             <button class="menu-btn" style="width:110px; font-size:12px; border-color:cyan" onclick="openMissions()">📜 MISSÕES</button>
+        </div>
+    </div>
+
+    <div id="missions-menu">
+        <h3 style="color:orange; margin-top:0;">MISSÕES DO DIA</h3>
+        <div id="daily-list"></div>
+        <h3 style="color:cyan;">CONQUISTAS SEMANAIS</h3>
+        <div id="weekly-list"></div>
+        <button class="menu-btn" style="width:100%; background:red" onclick="document.getElementById('missions-menu').style.display='none'">FECHAR</button>
     </div>
 
     <div id="game-over" class="overlay hidden">
@@ -112,7 +132,6 @@
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('dmg')">DANO +1 (10💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyUpgrade('hp')">VIDA +5 (15💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('shield')">ESCUDO (20💰)</button>
-        <button style="width:100%;margin:5px 0" onclick="buyItem('focus')">FOCO (100💰)</button>
         <button style="width:100%;margin:5px 0" onclick="buyItem('pet')">PET (150💰)</button>
         <button style="width:100%;background:red;margin-top:10px" onclick="document.getElementById('store').style.display='none'">FECHAR</button>
     </div>
@@ -125,14 +144,65 @@
             { id: "vrack", name: "Vrack", price: 83, url: "https://w7.pngwing.com/pngs/341/329/png-transparent-overwatch-pixel-art-bead-pixel-gun-video-game-bead-fictional-character-thumbnail.png" }
         ];
 
-        let currentSkinId = localStorage.getItem("gs_current_id") || "zark";
-        let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_ids")) || ["zark"];
         let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
         let trofeusMap = JSON.parse(localStorage.getItem("gs_trofeus")) || {zark:0, dexyz:0, sheze:0, vrack:0};
+        let currentSkinId = localStorage.getItem("gs_current_id") || "zark";
+        let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_ids")) || ["zark"];
         
-        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, focusOwned=false, playerHits=0;
+        let missionData = JSON.parse(localStorage.getItem("gs_mission_data")) || {
+            lastDay: "", lastWeek: 0,
+            daily: [
+                { id: "kill20", title: "Eliminar 20 Zumbis", goal: 20, progress: 0, reward: 5, collected: false },
+                { id: "wave10", title: "Chegar na Onda 10", goal: 10, progress: 0, reward: 3, collected: false },
+                { id: "super3", title: "Usar SUPER 3 Vezes", goal: 3, progress: 0, reward: 4, collected: false }
+            ],
+            weekly: [
+                { id: "kill200", title: "Eliminar 200 Zumbis", goal: 200, progress: 0, reward: 25, collected: false },
+                { id: "wave25", title: "Chegar na Onda 25", goal: 25, progress: 0, reward: 30, collected: false }
+            ]
+        };
 
-        const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie"), area=document.getElementById("game-area"), shield=document.getElementById("shield");
+        let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, playerHits=0;
+
+        const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie"), area=document.getElementById("game-area");
+
+        function checkResets() {
+            const now = new Date();
+            const today = now.toDateString();
+            const startYear = new Date(now.getFullYear(), 0, 1);
+            const weekNum = Math.ceil((((now - startYear) / 86400000) + startYear.getDay() + 1) / 7);
+            if (missionData.lastDay !== today) { missionData.lastDay = today; missionData.daily.forEach(m => { m.progress = 0; m.collected = false; }); }
+            if (missionData.lastWeek !== weekNum) { missionData.lastWeek = weekNum; missionData.weekly.forEach(m => { m.progress = 0; m.collected = false; }); }
+            localStorage.setItem("gs_mission_data", JSON.stringify(missionData));
+        }
+        checkResets();
+
+        function updateMissionProgress(type, amount) {
+            if (type === "kill") { missionData.daily[0].progress = Math.min(missionData.daily[0].goal, missionData.daily[0].progress + amount); missionData.weekly[0].progress = Math.min(missionData.weekly[0].goal, missionData.weekly[0].progress + amount); }
+            if (type === "wave") { missionData.daily[1].progress = Math.max(missionData.daily[1].progress, amount); missionData.weekly[1].progress = Math.max(missionData.weekly[1].progress, amount); }
+            if (type === "super") { missionData.daily[2].progress = Math.min(missionData.daily[2].goal, missionData.daily[2].progress + amount); }
+            localStorage.setItem("gs_mission_data", JSON.stringify(missionData));
+        }
+
+        function openMissions() {
+            const dList = document.getElementById("daily-list"); const wList = document.getElementById("weekly-list");
+            dList.innerHTML = ""; wList.innerHTML = "";
+            missionData.daily.forEach((m, idx) => {
+                const perc = (m.progress / m.goal) * 100; const isReady = m.progress >= m.goal && !m.collected;
+                dList.innerHTML += `<div class="mission-card"><h4>${m.title}</h4><div class="progress-bar"><div class="progress-fill" style="width:${perc}%"></div></div><small>${m.progress}/${m.goal} | 🌑 ${m.reward}</small>${isReady ? `<button class="btn-collect" onclick="collectMission('daily', ${idx})">COLETAR</button>` : m.collected ? '<div style="color:gray;font-size:10px">COLETADO ✅</div>' : ''}</div>`;
+            });
+            missionData.weekly.forEach((m, idx) => {
+                const perc = (m.progress / m.goal) * 100; const isReady = m.progress >= m.goal && !m.collected;
+                wList.innerHTML += `<div class="mission-card weekly"><h4>${m.title}</h4><div class="progress-bar"><div class="progress-fill" style="width:${perc}%"></div></div><small>${m.progress}/${m.goal} | 🌑 ${m.reward}</small>${isReady ? `<button class="btn-collect" onclick="collectMission('weekly', ${idx})">COLETAR</button>` : m.collected ? '<div style="color:gray;font-size:10px">COLETADO ✅</div>' : ''}</div>`;
+            });
+            document.getElementById("missions-menu").style.display = "block";
+        }
+
+        function collectMission(type, idx) {
+            const m = missionData[type][idx]; sombrios += m.reward; m.collected = true;
+            localStorage.setItem("gs_sombrios", sombrios); localStorage.setItem("gs_mission_data", JSON.stringify(missionData));
+            updateMenuInfo(); openMissions();
+        }
 
         function updateMenuInfo() {
             document.getElementById("menu-sombrios").textContent = sombrios;
@@ -145,25 +215,15 @@
             const list = document.getElementById("skins-list"); list.innerHTML = "";
             SKINS.forEach(s => {
                 const isOwned = ownedSkins.includes(s.id);
-                const t = trofeusMap[s.id] || 0;
-                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name}</span><div style="display:flex; align-items:center; gap:5px; margin-top:3px;"><div class="trofeu-icon"></div><span>${t}</span></div></div>
-                <button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', ${s.price})`}">${isOwned ? 'USAR' : s.price + ' S'}</button></div>`;
+                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name}</span><div style="display:flex; align-items:center; gap:5px; margin-top:3px;"><div class="trofeu-icon"></div><span>${trofeusMap[s.id]||0}</span></div></div><button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', ${s.price})`}">${isOwned ? 'USAR' : s.price + ' S'}</button></div>`;
             });
             document.getElementById('skins-menu').style.display='block';
         }
 
-        function buySkin(id, price) {
-            if(sombrios >= price) { sombrios -= price; ownedSkins.push(id); localStorage.setItem("gs_sombrios", sombrios); localStorage.setItem("gs_owned_ids", JSON.stringify(ownedSkins)); updateMenuInfo(); openSkins(); }
-        }
-
+        function buySkin(id, price) { if(sombrios >= price) { sombrios -= price; ownedSkins.push(id); localStorage.setItem("gs_sombrios", sombrios); localStorage.setItem("gs_owned_ids", JSON.stringify(ownedSkins)); updateMenuInfo(); openSkins(); } }
         function selectSkin(id) { currentSkinId = id; localStorage.setItem("gs_current_id", id); updateMenuInfo(); document.getElementById('skins-menu').style.display='none'; }
-
         function startGame() { paused=false; document.getElementById("main-menu").classList.add("hidden"); resetEnemy(); startLoops(); }
-
-        function togglePause() { 
-            paused = !paused; 
-            document.getElementById("attack-button").innerText = paused ? "⏸️ PAUSADO" : "🔥 ATACAR";
-        }
+        function togglePause() { paused = !paused; document.getElementById("attack-button").innerText = paused ? "⏸️ PAUSADO" : "🔥 ATACAR"; }
 
         function updateHUD() {
             document.getElementById("vida").textContent = playerHP; document.getElementById("coins-display").textContent = coins;
@@ -171,7 +231,7 @@
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
             document.getElementById("enemyHPFill").style.width = (zombieHP/zombieMaxHP)*100 + "%";
             document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
-            if(shieldHP > 0) { shield.style.display="block"; shield.style.left=(document.getElementById("player").offsetLeft-5)+"px"; shield.style.top=(document.getElementById("player").offsetTop-5)+"px"; } else { shield.style.display="none"; }
+            if(shieldHP > 0) { document.getElementById("shield").style.display="block"; document.getElementById("shield").style.left=(document.getElementById("player").offsetLeft-5)+"px"; document.getElementById("shield").style.top=(document.getElementById("player").offsetTop-5)+"px"; } else { document.getElementById("shield").style.display="none"; }
         }
 
         function resetEnemy() {
@@ -190,12 +250,7 @@
 
         function shootBullet(isSuper=false, off=0, angle=0, customDmg=null, isMeteor=false) {
             if(paused || (!isSuper && !canShoot)) return;
-            if(!isSuper) {
-                canShoot = false;
-                setTimeout(() => canShoot = true, (currentSkinId === "vrack" ? 1500 : 500));
-                if(currentSkinId === "dexyz") { shootBullet(true, -12); shootBullet(true, 12); return; }
-                if(currentSkinId === "sheze") { shootBullet(true, 0); setTimeout(()=>shootBullet(true,0),150); setTimeout(()=>shootBullet(true,0),300); return; }
-            }
+            if(!isSuper) { canShoot = false; setTimeout(() => canShoot = true, (currentSkinId === "vrack" ? 1500 : 500)); }
             const b = document.createElement("div"); b.className = "bullet";
             if(currentSkinId === "dexyz") b.classList.add("disco-dexyz");
             if(currentSkinId === "sheze") b.classList.add("sheze-bullet");
@@ -210,15 +265,12 @@
                 let zL = zGroup.offsetLeft, zSize = zombie.offsetWidth;
                 if(top <= 60 && top >= 10 && left >= zL - 5 && left <= zL + zSize + 5) {
                     clearInterval(m); b.remove();
-                    let finalDmg = customDmg || damage;
-                    if(currentSkinId === "vrack" && !isMeteor) finalDmg = damage * 3;
-                    zombieHP -= finalDmg; playerHits++;
+                    zombieHP -= (customDmg || (currentSkinId==="vrack" && !isMeteor ? damage*3 : damage));
                     zombie.classList.add("z-hit"); setTimeout(() => zombie.classList.remove("z-hit"), 100);
                     if(zombieHP/zombieMaxHP < 0.2) zombie.classList.add("z-smoke");
-                    if(currentSkinId === "vrack") { zGroup.style.top = "0px"; setTimeout(()=>zGroup.style.top="10px", 100); }
-                    if(playerHits >= (wave >= 6 && wave <= 9 ? 2 : 3)) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
+                    playerHits++; if(playerHits >= (wave>=6&&wave<=9?2:3)) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
-                    if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; localStorage.setItem("gs_sombrios", sombrios); showRewardEffect(); resetEnemy(); }
+                    if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; updateMissionProgress("kill", 1); updateMissionProgress("wave", wave); showRewardEffect(); resetEnemy(); }
                     updateHUD();
                 } else if(top < -50 || top > 400) { clearInterval(m); b.remove(); }
                 else { b.style.top = (top + (isMeteor ? 8 : -12)) + "px"; b.style.left = (left + angle) + "px"; }
@@ -227,7 +279,7 @@
 
         function activateSuper() {
             if(superCharge < 100 || paused) return;
-            superCharge = 0;
+            superCharge = 0; updateMissionProgress("super", 1);
             if(currentSkinId === "vrack") { for(let i=0; i<4; i++) setTimeout(() => shootBullet(true, 0, 0, damage*10, true), i*300); }
             else if(currentSkinId === "dexyz") { for(let i=-18; i<=18; i+=4) shootBullet(true, 0, i); }
             else if(currentSkinId === "sheze") { zombieHP -= (damage * 8); updateHUD(); }
@@ -237,32 +289,29 @@
 
         function move(d) { if(!paused) { let cur = document.getElementById("player").offsetLeft; document.getElementById("player").style.left = (d==='L' ? Math.max(0,cur-30) : Math.min(260,cur+30))+"px"; updateHUD(); } }
         function buyUpgrade(t) { let cost = (t==='dmg'?10:15); if(coins>=cost) { coins-=cost; if(t==='dmg') damage++; else playerHP+=5; updateHUD(); } }
-        function buyItem(t) { if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; } if(t==='focus' && coins>=100) { focusOwned=true; } if(t==='pet' && coins>=150) { petOwned=true; } updateHUD(); }
+        function buyItem(t) { if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; } if(t==='pet' && coins>=150) { petOwned=true; } updateHUD(); }
 
         function die() {
             paused=true;
             let ganhou = (wave >= 21 ? 20 : wave >= 11 ? 10 : wave >= 6 ? 5 : 2);
             trofeusMap[currentSkinId] = (trofeusMap[currentSkinId] || 0) + ganhou;
             localStorage.setItem("gs_trofeus", JSON.stringify(trofeusMap));
+            localStorage.setItem("gs_sombrios", sombrios);
             document.getElementById("gain-stats").innerHTML = `+${ganhou} <div class="trofeu-icon"></div> Poder Sombrio!`;
             document.getElementById("game-over").classList.remove("hidden");
         }
 
         function enemyFire(off=0, ang=0) {
             if(paused) return;
-            const zb = document.createElement("div"); 
-            zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
+            const zb = document.createElement("div"); zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
             if(wave >= 11 && Math.random() > 0.6) zb.classList.add("z-bullet-track");
             zb.style.left = (zGroup.offsetLeft + 25 + off) + "px"; area.appendChild(zb);
             let pos = 40, angle = ang;
-            if(zb.classList.contains("z-bullet-track")) {
-                let target = document.getElementById("player").offsetLeft + 20;
-                angle = (target - parseInt(zb.style.left)) / 45;
-            }
+            if(zb.classList.contains("z-bullet-track")) { let t = document.getElementById("player").offsetLeft + 20; angle = (t - parseFloat(zb.style.left)) / 45; }
             let m = setInterval(() => {
                 if(paused) return; pos += 7; zb.style.top = pos + "px"; zb.style.left = (parseFloat(zb.style.left) + angle) + "px";
                 let pL = document.getElementById("player").offsetLeft;
-                if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL+40) {
+                if(pos >= 310 && pos <= 340 && parseFloat(zb.style.left) >= pL && parseFloat(zb.style.left) <= pL+40) {
                     clearInterval(m); zb.remove(); if(shieldHP>0) shieldHP--; else playerHP--; if(playerHP<=0) die(); updateHUD();
                 } else if(pos > 360) { clearInterval(m); zb.remove(); }
             }, 40);
@@ -277,23 +326,13 @@
                 if(paused) return; pos += 5; m.style.top = pos + "px";
                 let pL = document.getElementById("player").offsetLeft;
                 if(pos >= 310 && pos <= 345 && parseInt(m.style.left) >= pL && parseInt(m.style.left) <= pL+40) {
-                    clearInterval(loop); m.remove(); 
-                    if(shieldHP > 0) shieldHP--; else playerHP--; 
-                    if(playerHP <= 0) die(); updateHUD();
+                    clearInterval(loop); m.remove(); if(shieldHP>0) shieldHP--; else playerHP--; if(playerHP<=0) die(); updateHUD();
                 } else if(pos > 360) { clearInterval(loop); m.remove(); }
             }, 50);
         }
 
         function startLoops() {
-            setInterval(() => { 
-                if(!paused) {
-                    if(wave % 10 === 0) {
-                        let target = document.getElementById("player").offsetLeft + 20;
-                        let diff = (target - (zGroup.offsetLeft + 25)) / 45;
-                        enemyFire(0, diff); enemyFire(-20, -2); enemyFire(20, 2);
-                    } else { enemyFire(); }
-                }
-            }, (wave >= 6 && wave <= 9 ? 1400 : 2000));
+            setInterval(() => { if(!paused) { if(wave % 10 === 0) { let t = document.getElementById("player").offsetLeft+20; let d = (t-(zGroup.offsetLeft+25))/45; enemyFire(0, d); enemyFire(-20,-2); enemyFire(20,2); } else enemyFire(); }}, (wave >= 6 && wave <= 9 ? 1400 : 2000));
             setInterval(() => { if(!paused && wave >= 5) spawnMinion(); }, 7000);
             setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000);
         }
