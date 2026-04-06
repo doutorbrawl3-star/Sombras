@@ -15,12 +15,10 @@
         #player { width: 40px; height: 40px; position: absolute; bottom: 10px; left: 130px; z-index: 5; }
         #player img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 0 5px red); }
 
-        /* Ícone Sombrio (Moeda) */
-        .sombrio-icon { display: inline-block; width: 16px; height: 16px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; }
+        .sombrio-icon { display: inline-block; width: 16px; height: 16px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: inset 0 0 5px #000; }
         .sombrio-icon::after { content: 'S'; font-size: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #bbb; font-weight: bold; }
 
-        /* Ícone do Troféu (Poder Sombrio) */
-        .trofeu-icon { display: inline-block; width: 18px; height: 18px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: 0 0 5px #000; }
+        .trofeu-icon { display: inline-block; width: 18px; height: 18px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; }
         .trofeu-icon::after { content: '🏆'; font-size: 10px; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); filter: grayscale(1); }
 
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 22px; pointer-events: none; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
@@ -29,9 +27,8 @@
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .disco-dexyz { background: #0ff; width: 18px; height: 6px; border-radius: 10px; box-shadow: 0 0 10px #0ff; }
         .sheze-bullet { background: #a0f; width: 4px; height: 10px; }
-        .vrack-bullet { background: #f00; width: 14px; height: 14px; border-radius: 50%; }
-        
-        .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
+        .vrack-blackhole { background: #303; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #f0f; box-shadow: 0 0 15px #f0f; }
+
         #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
         #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; }
         .z-burning { filter: hue-rotate(280deg) brightness(1.5); }
@@ -41,18 +38,16 @@
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 10px; z-index: 10; }
 
         #shield { position: absolute; width: 50px; height: 50px; border-radius: 50%; z-index: 2; display: none; border: 3px solid cyan; box-shadow: 0 0 10px cyan; pointer-events: none; }
-
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 310px; margin: 0 auto; font-size: 13px; font-weight: bold; }
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 300px; margin: 10px auto; }
         button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        
         #super-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #222; }
         #super-bar-fill { height: 100%; width: 0%; background: cyan; }
-        
         #store, #skins-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
         .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
         .skin-card img { width: 35px; height: 35px; }
         .skin-info { display: flex; flex-direction: column; align-items: flex-start; flex: 1; margin-left: 10px; }
+        .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
     </style>
 </head>
 <body>
@@ -69,7 +64,7 @@
 
     <div id="game-over" class="overlay hidden">
         <h1 style="color:red">GAME OVER</h1>
-        <div id="gain-stats" style="margin: 10px; font-size: 18px; color: #0f0;"></div>
+        <div id="gain-stats" style="margin: 10px; color: #0f0;"></div>
         <button class="menu-btn" onclick="location.reload()">LOBBY</button>
     </div>
 
@@ -133,8 +128,7 @@
 
         function updateMenuInfo() {
             document.getElementById("menu-sombrios").textContent = sombrios;
-            let totalPoder = Object.values(trofeusMap).reduce((a, b) => a + b, 0);
-            document.getElementById("menu-poder-total").textContent = totalPoder;
+            document.getElementById("menu-poder-total").textContent = Object.values(trofeusMap).reduce((a, b) => a + b, 0);
             pImg.src = SKINS.find(s => s.id === currentSkinId).url;
         }
         updateMenuInfo();
@@ -143,15 +137,8 @@
             const list = document.getElementById("skins-list"); list.innerHTML = "";
             SKINS.forEach(s => {
                 const isOwned = ownedSkins.includes(s.id);
-                const t = trofeusMap[s.id] || 0;
-                list.innerHTML += `<div class="skin-card">
-                    <img src="${s.url}">
-                    <div class="skin-info">
-                        <span>${s.name}</span>
-                        <small><div class="trofeu-icon"></div> ${t}</small>
-                    </div>
-                    <button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', ${s.price})`}">${isOwned ? 'USAR' : s.price + ' S'}</button>
-                </div>`;
+                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name}</span><small>🏆 ${trofeusMap[s.id]||0}</small></div>
+                <button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', ${s.price})`}">${isOwned ? 'USAR' : s.price + ' S'}</button></div>`;
             });
             document.getElementById('skins-menu').style.display='block';
         }
@@ -181,32 +168,40 @@
             area.appendChild(r); setTimeout(() => r.remove(), 1200);
         }
 
-        function shootBullet(isSuper=false, off=0, angle=0, customDmg=null) {
+        function shootBullet(isSuper=false, off=0, angle=0, customDmg=null, isMeteor=false) {
             if(paused || (!isSuper && !canShoot)) return;
             if(!isSuper) {
                 canShoot = false;
-                setTimeout(() => canShoot = true, (currentSkinId === "sheze" || currentSkinId === "vrack" ? 1000 : 500));
+                setTimeout(() => canShoot = true, (currentSkinId === "vrack" ? 1500 : 500));
                 if(currentSkinId === "dexyz") { shootBullet(true, -12); shootBullet(true, 12); return; }
                 if(currentSkinId === "sheze") { shootBullet(true, 0); setTimeout(()=>shootBullet(true,0),150); setTimeout(()=>shootBullet(true,0),300); return; }
-                if(currentSkinId === "vrack") { shootBullet(true, 0, 0, damage*2); return; }
             }
-            const b = document.createElement("div"); b.className = "bullet";
+
+            const b = document.createElement("div");
+            b.className = "bullet";
             if(currentSkinId === "dexyz") b.classList.add("disco-dexyz");
             if(currentSkinId === "sheze") b.classList.add("sheze-bullet");
-            if(currentSkinId === "vrack") b.classList.add("vrack-bullet");
-            b.style.left = (document.getElementById("player").offsetLeft + 13 + off) + "px";
-            b.style.top = "300px"; area.appendChild(b);
+            if(currentSkinId === "vrack") b.classList.add("vrack-blackhole");
+            if(isMeteor) { b.style.width="40px"; b.style.height="40px"; b.style.background="red"; b.style.boxShadow="0 0 20px orange"; }
+
+            b.style.left = isMeteor ? (Math.random()*260)+"px" : (document.getElementById("player").offsetLeft + 13 + off) + "px";
+            b.style.top = isMeteor ? "-50px" : "300px";
+            area.appendChild(b);
+
             let m = setInterval(() => {
                 if(paused) return;
                 let top = parseInt(b.style.top), left = parseInt(b.style.left);
-                if(top <= 60 && top >= 10 && left >= zGroup.offsetLeft && left <= zGroup.offsetLeft + 60) {
-                    clearInterval(m); b.remove(); zombieHP -= (customDmg || damage);
-                    playerHits++; if(playerHits >= 3) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
+                if(top <= 60 && top >= 10 && left >= zGroup.offsetLeft - 10 && left <= zGroup.offsetLeft + 60) {
+                    clearInterval(m); b.remove();
+                    let finalDmg = customDmg || damage;
+                    if(currentSkinId === "vrack" && !isMeteor) finalDmg = damage * 3;
+                    zombieHP -= finalDmg; playerHits++;
+                    if(playerHits >= 3) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
                     if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; localStorage.setItem("gs_sombrios", sombrios); showRewardEffect(); resetEnemy(); }
                     updateHUD();
-                } else if(top < -20 || left < -20 || left > 320) { clearInterval(m); b.remove(); }
-                else { b.style.top = (top - 12) + "px"; b.style.left = (left + angle) + "px"; }
+                } else if(top < -50 || top > 400) { clearInterval(m); b.remove(); }
+                else { b.style.top = (top + (isMeteor ? 8 : -12)) + "px"; b.style.left = (left + angle) + "px"; }
             }, 25);
         }
 
@@ -233,8 +228,8 @@
         function activateSuper() {
             if(superCharge < 100 || paused) return;
             superCharge = 0;
-            if(currentSkinId === "dexyz") { for(let i=-18; i<=18; i+=4) shootBullet(true, 0, i); }
-            else if(currentSkinId === "vrack") { for(let i=-40; i<=40; i+=20) shootBullet(true, i, 0, damage*5); }
+            if(currentSkinId === "vrack") { for(let i=0; i<4; i++) setTimeout(() => shootBullet(true, 0, 0, damage*10, true), i*300); }
+            else if(currentSkinId === "dexyz") { for(let i=-18; i<=18; i+=4) shootBullet(true, 0, i); }
             else if(currentSkinId === "sheze") { zombieHP -= (damage * 8); updateHUD(); }
             else { for(let i=-60; i<=60; i+=20) shootBullet(true, i); }
             updateHUD();
@@ -242,16 +237,13 @@
 
         function move(d) { let cur = document.getElementById("player").offsetLeft; document.getElementById("player").style.left = (d==='L' ? Math.max(0,cur-30) : Math.min(260,cur+30))+"px"; updateHUD(); }
         function buyUpgrade(t) { let cost = (t==='dmg'?10:15); if(coins>=cost) { coins-=cost; if(t==='dmg') damage++; else playerHP+=5; updateHUD(); } }
-        function buyItem(t) { if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; } if(t==='focus' && coins>=100) { coins-=100; focusOwned=true; } if(t==='pet' && coins>=150) { coins-=150; petOwned=true; } updateHUD(); }
+        function buyItem(t) { if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; } if(t==='focus' && coins>=100) { focusOwned=true; } if(t==='pet' && coins>=150) { petOwned=true; } updateHUD(); }
 
         function die() {
             paused=true;
-            let ganhou = 0;
-            if(wave >= 21) ganhou = 20; else if(wave >= 11) ganhou = 10; else if(wave >= 6) ganhou = 5; else if(wave >= 1) ganhou = 2;
-            
+            let ganhou = (wave >= 21 ? 20 : wave >= 11 ? 10 : wave >= 6 ? 5 : 2);
             trofeusMap[currentSkinId] = (trofeusMap[currentSkinId] || 0) + ganhou;
             localStorage.setItem("gs_trofeus", JSON.stringify(trofeusMap));
-            
             document.getElementById("gain-stats").innerHTML = `+${ganhou} <div class="trofeu-icon"></div> Poder Sombrio!`;
             document.getElementById("game-over").classList.remove("hidden");
         }
