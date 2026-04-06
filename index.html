@@ -50,6 +50,7 @@
         button { padding: 15px 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #super-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #222; }
         #super-bar-fill { height: 100%; width: 0%; background: cyan; }
+        
         #store, #skins-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
         .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
         .skin-card img { width: 35px; height: 35px; }
@@ -96,8 +97,8 @@
         <button onclick="document.getElementById('store').style.display='block'">🛒 LOJA</button>
         <button onclick="move('R')">➡️</button>
         <button id="attack-button" style="grid-column: 1/3; background: #f44;" onclick="shootBullet()">🔥 ATACAR</button>
-        <button id="focus-btn" style="display:none" onclick="shootFocusBall()">🔮 FOCO</button>
         <button onclick="activateSuper()">✨ SUPER<div id="super-bar-container"><div id="super-bar-fill"></div></div></button>
+        <button onclick="togglePause()" style="grid-column:1/4">⏸️ PAUSAR</button>
     </div>
 
     <div id="skins-menu">
@@ -159,11 +160,15 @@
 
         function startGame() { paused=false; document.getElementById("main-menu").classList.add("hidden"); resetEnemy(); startLoops(); }
 
+        function togglePause() { 
+            paused = !paused; 
+            document.getElementById("attack-button").innerText = paused ? "⏸️ PAUSADO" : "🔥 ATACAR";
+        }
+
         function updateHUD() {
             document.getElementById("vida").textContent = playerHP; document.getElementById("coins-display").textContent = coins;
             document.getElementById("wave").textContent = wave; document.getElementById("damage").textContent = damage;
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
-            document.getElementById("focus-btn").style.display = focusOwned ? "block" : "none";
             document.getElementById("enemyHPFill").style.width = (zombieHP/zombieMaxHP)*100 + "%";
             document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
             if(shieldHP > 0) { shield.style.display="block"; shield.style.left=(document.getElementById("player").offsetLeft-5)+"px"; shield.style.top=(document.getElementById("player").offsetTop-5)+"px"; } else { shield.style.display="none"; }
@@ -220,26 +225,6 @@
             }, 25);
         }
 
-        function shootFocusBall() {
-            if(paused || !focusOwned || document.querySelector(".focus-ball")) return;
-            const b = document.createElement("div"); b.className = "focus-ball";
-            b.style.left = (document.getElementById("player").offsetLeft + 12) + "px";
-            b.style.top = "300px"; area.appendChild(b);
-            let m = setInterval(() => {
-                if(paused) return;
-                let top = parseInt(b.style.top);
-                if(top <= 60 && top >= 10 && parseInt(b.style.left) >= zGroup.offsetLeft && parseInt(b.style.left) <= zGroup.offsetLeft + 60) {
-                    clearInterval(m); b.remove(); zombie.classList.add("z-burning");
-                    let burn = setInterval(() => {
-                        zombieHP -= (damage * 0.5); updateHUD();
-                        if(zombieHP <= 0) { clearInterval(burn); zombie.classList.remove("z-burning"); wave++; coins+=10; sombrios+=5; showRewardEffect(); resetEnemy(); }
-                    }, 200);
-                    setTimeout(() => { clearInterval(burn); zombie.classList.remove("z-burning"); }, 3000);
-                } else if(top < -20) { clearInterval(m); b.remove(); }
-                else b.style.top = (top - 8) + "px";
-            }, 30);
-        }
-
         function activateSuper() {
             if(superCharge < 100 || paused) return;
             superCharge = 0;
@@ -250,7 +235,7 @@
             updateHUD();
         }
 
-        function move(d) { let cur = document.getElementById("player").offsetLeft; document.getElementById("player").style.left = (d==='L' ? Math.max(0,cur-30) : Math.min(260,cur+30))+"px"; updateHUD(); }
+        function move(d) { if(!paused) { let cur = document.getElementById("player").offsetLeft; document.getElementById("player").style.left = (d==='L' ? Math.max(0,cur-30) : Math.min(260,cur+30))+"px"; updateHUD(); } }
         function buyUpgrade(t) { let cost = (t==='dmg'?10:15); if(coins>=cost) { coins-=cost; if(t==='dmg') damage++; else playerHP+=5; updateHUD(); } }
         function buyItem(t) { if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; } if(t==='focus' && coins>=100) { focusOwned=true; } if(t==='pet' && coins>=150) { petOwned=true; } updateHUD(); }
 
@@ -263,27 +248,22 @@
             document.getElementById("game-over").classList.remove("hidden");
         }
 
-        function enemyFire() {
+        function enemyFire(off=0, ang=0) {
             if(paused) return;
             const zb = document.createElement("div"); 
             zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
             if(wave >= 11 && Math.random() > 0.6) zb.classList.add("z-bullet-track");
-            zb.style.left = (zGroup.offsetLeft + 25) + "px"; area.appendChild(zb);
-            let pos = 40, ang = 0;
+            zb.style.left = (zGroup.offsetLeft + 25 + off) + "px"; area.appendChild(zb);
+            let pos = 40, angle = ang;
             if(zb.classList.contains("z-bullet-track")) {
-                                let target = document.getElementById("player").offsetLeft + 20;
-                ang = (target - parseInt(zb.style.left)) / 45;
+                let target = document.getElementById("player").offsetLeft + 20;
+                angle = (target - parseInt(zb.style.left)) / 45;
             }
             let m = setInterval(() => {
-                if(paused) return; 
-                pos += 7; 
-                zb.style.top = pos + "px"; 
-                zb.style.left = (parseFloat(zb.style.left) + ang) + "px";
+                if(paused) return; pos += 7; zb.style.top = pos + "px"; zb.style.left = (parseFloat(zb.style.left) + angle) + "px";
                 let pL = document.getElementById("player").offsetLeft;
                 if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL+40) {
-                    clearInterval(m); zb.remove(); 
-                    if(shieldHP > 0) shieldHP--; else playerHP--; 
-                    if(playerHP <= 0) die(); updateHUD();
+                    clearInterval(m); zb.remove(); if(shieldHP>0) shieldHP--; else playerHP--; if(playerHP<=0) die(); updateHUD();
                 } else if(pos > 360) { clearInterval(m); zb.remove(); }
             }, 40);
         }
@@ -297,7 +277,9 @@
                 if(paused) return; pos += 5; m.style.top = pos + "px";
                 let pL = document.getElementById("player").offsetLeft;
                 if(pos >= 310 && pos <= 345 && parseInt(m.style.left) >= pL && parseInt(m.style.left) <= pL+40) {
-                    clearInterval(loop); m.remove(); playerHP--; if(playerHP <= 0) die(); updateHUD();
+                    clearInterval(loop); m.remove(); 
+                    if(shieldHP > 0) shieldHP--; else playerHP--; 
+                    if(playerHP <= 0) die(); updateHUD();
                 } else if(pos > 360) { clearInterval(loop); m.remove(); }
             }, 50);
         }
