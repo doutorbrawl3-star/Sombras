@@ -24,15 +24,23 @@
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 22px; pointer-events: none; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -150%); } }
 
+        /* Tiros e Inimigos */
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .disco-dexyz { background: #0ff; width: 18px; height: 6px; border-radius: 10px; box-shadow: 0 0 10px #0ff; }
         .sheze-bullet { background: #a0f; width: 4px; height: 10px; }
         .vrack-blackhole { background: #303; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #f0f; box-shadow: 0 0 15px #f0f; }
 
-        #zombie-group { position: absolute; width: 60px; height: 60px; top: 10px; left: 120px; transition: left 0.3s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 4; }
-        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; }
-        .z-burning { filter: hue-rotate(280deg) brightness(1.5); }
+        #zombie-group { position: absolute; width: 60px; height: 80px; top: 10px; left: 120px; transition: left 0.3s ease-out, top 0.2s; display: flex; flex-direction: column; align-items: center; z-index: 4; }
+        #zombie { width: 30px; height: 30px; background: green; border-radius: 4px; transition: 0.1s; position: relative; }
+        .z-boss { width: 55px !important; height: 55px !important; box-shadow: 0 0 15px red; }
+        .z-ghost { opacity: 0.6; }
+        .z-hit { filter: brightness(3); transform: scale(1.1); }
+        .z-smoke::after { content: '💨'; position: absolute; top: -15px; font-size: 15px; animation: smoke 0.6s infinite; }
+        @keyframes smoke { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
         
+        .minion { position: absolute; width: 15px; height: 15px; background: #0f0; border: 1px solid #fff; border-radius: 3px; z-index: 4; }
+        .z-bullet-track { background: #f0f !important; box-shadow: 0 0 8px #f0f; }
+
         #enemyHPContainer { width: 70px; height: 16px; background: #333; border: 1px solid #fff; margin-top: 5px; border-radius: 3px; overflow: hidden; position: relative; }
         #enemyHPFill { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
         #enemyHPText { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 10px; z-index: 10; }
@@ -46,7 +54,6 @@
         #store, #skins-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
         .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
         .skin-card img { width: 35px; height: 35px; }
-        .skin-info { display: flex; flex-direction: column; align-items: flex-start; flex: 1; margin-left: 10px; }
         .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
     </style>
 </head>
@@ -124,7 +131,7 @@
         
         let coins=0, damage=1, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, focusOwned=false, playerHits=0;
 
-        const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), area=document.getElementById("game-area"), shield=document.getElementById("shield");
+        const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie"), area=document.getElementById("game-area"), shield=document.getElementById("shield");
 
         function updateMenuInfo() {
             document.getElementById("menu-sombrios").textContent = sombrios;
@@ -161,7 +168,14 @@
             if(shieldHP > 0) { shield.style.display="block"; shield.style.left=(document.getElementById("player").offsetLeft-5)+"px"; shield.style.top=(document.getElementById("player").offsetTop-5)+"px"; } else { shield.style.display="none"; }
         }
 
-        function resetEnemy() { zombieMaxHP = 5 + (wave * 2); zombieHP = zombieMaxHP; zGroup.style.left = "120px"; playerHits = 0; updateHUD(); }
+        function resetEnemy() {
+            zombie.classList.remove("z-boss", "z-ghost", "z-smoke");
+            zombie.style.background = (wave >= 6 && wave <= 9) ? "white" : "green";
+            if(wave % 10 === 0) { zombieMaxHP = (wave * 10); zombie.classList.add("z-boss"); zombie.style.background = "#200"; }
+            else if(wave >= 6 && wave <= 9) { zombieMaxHP = 3 + (wave * 1.5); zombie.classList.add("z-ghost"); }
+            else { zombieMaxHP = 5 + (wave * 2); }
+            zombieHP = zombieMaxHP; zGroup.style.left = "120px"; playerHits = 0; updateHUD();
+        }
 
         function showRewardEffect() {
             const r = document.createElement("div"); r.className = "floating-reward"; r.innerHTML = `+5 <div class="sombrio-icon"></div>`;
@@ -176,27 +190,27 @@
                 if(currentSkinId === "dexyz") { shootBullet(true, -12); shootBullet(true, 12); return; }
                 if(currentSkinId === "sheze") { shootBullet(true, 0); setTimeout(()=>shootBullet(true,0),150); setTimeout(()=>shootBullet(true,0),300); return; }
             }
-
-            const b = document.createElement("div");
-            b.className = "bullet";
+            const b = document.createElement("div"); b.className = "bullet";
             if(currentSkinId === "dexyz") b.classList.add("disco-dexyz");
             if(currentSkinId === "sheze") b.classList.add("sheze-bullet");
             if(currentSkinId === "vrack") b.classList.add("vrack-blackhole");
             if(isMeteor) { b.style.width="40px"; b.style.height="40px"; b.style.background="red"; b.style.boxShadow="0 0 20px orange"; }
-
             b.style.left = isMeteor ? (Math.random()*260)+"px" : (document.getElementById("player").offsetLeft + 13 + off) + "px";
-            b.style.top = isMeteor ? "-50px" : "300px";
-            area.appendChild(b);
+            b.style.top = isMeteor ? "-50px" : "300px"; area.appendChild(b);
 
             let m = setInterval(() => {
                 if(paused) return;
                 let top = parseInt(b.style.top), left = parseInt(b.style.left);
-                if(top <= 60 && top >= 10 && left >= zGroup.offsetLeft - 10 && left <= zGroup.offsetLeft + 60) {
+                let zL = zGroup.offsetLeft, zSize = zombie.offsetWidth;
+                if(top <= 60 && top >= 10 && left >= zL - 5 && left <= zL + zSize + 5) {
                     clearInterval(m); b.remove();
                     let finalDmg = customDmg || damage;
                     if(currentSkinId === "vrack" && !isMeteor) finalDmg = damage * 3;
                     zombieHP -= finalDmg; playerHits++;
-                    if(playerHits >= 3) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
+                    zombie.classList.add("z-hit"); setTimeout(() => zombie.classList.remove("z-hit"), 100);
+                    if(zombieHP/zombieMaxHP < 0.2) zombie.classList.add("z-smoke");
+                    if(currentSkinId === "vrack") { zGroup.style.top = "0px"; setTimeout(()=>zGroup.style.top="10px", 100); }
+                    if(playerHits >= (wave >= 6 && wave <= 9 ? 2 : 3)) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
                     if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; localStorage.setItem("gs_sombrios", sombrios); showRewardEffect(); resetEnemy(); }
                     updateHUD();
@@ -248,20 +262,96 @@
             document.getElementById("game-over").classList.remove("hidden");
         }
 
+        function enemyFire() {
+            if(paused) return;
+            const zb = document.createElement("div"); 
+            zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
+            // TIRO PERSEGUIDOR A PARTIR DA ONDA 11
+            if(wave >= 11 && Math.random() > 0.6) zb.classList.add("z-bullet-track");
+            
+            zb.style.left = (zGroup.offsetLeft + 25) + "px"; area.appendChild(zb);
+            let pos = 40, ang = 0;
+            if(zb.classList.contains("z-bullet-track")) {
+                let target = document.getElementById("player").offsetLeft + 20;
+                ang = (target - parseInt(zb.style.left)) / 45;
+            }
+            
+                        let m = setInterval(() => {
+                if(paused) return; 
+                pos += 7; 
+                zb.style.top = pos + "px"; 
+                zb.style.left = (parseFloat(zb.style.left) + ang) + "px";
+                
+                let pL = document.getElementById("player").offsetLeft;
+                
+                // Colisão com o jogador
+                if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL+40) {
+                    clearInterval(m); 
+                    zb.remove(); 
+                    if(shieldHP > 0) shieldHP--; else playerHP--; 
+                    if(playerHP <= 0) die(); 
+                    updateHUD();
+                } else if(pos > 360) { 
+                    clearInterval(m); 
+                    zb.remove(); 
+                }
+            }, 40);
+        }
+
+        function spawnMinion() {
+            if(paused) return;
+            const m = document.createElement("div"); 
+            m.className = "minion";
+            m.style.left = (zGroup.offsetLeft + 20) + "px"; 
+            m.style.top = "60px"; 
+            area.appendChild(m);
+            
+            let pos = 60;
+            let loop = setInterval(() => {
+                if(paused) return; 
+                pos += 5; 
+                m.style.top = pos + "px";
+                let pL = document.getElementById("player").offsetLeft;
+                
+                if(pos >= 310 && pos <= 345 && parseInt(m.style.left) >= pL && parseInt(m.style.left) <= pL+40) {
+                    clearInterval(loop); 
+                    m.remove(); 
+                    playerHP--; 
+                    if(playerHP <= 0) die(); 
+                    updateHUD();
+                } else if(pos > 360) { 
+                    clearInterval(loop); 
+                    m.remove(); 
+                }
+            }, 50);
+        }
+
         function startLoops() {
-            setInterval(() => { if(!paused) {
-                const zb = document.createElement("div"); zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
-                zb.style.left = (zGroup.offsetLeft + 25) + "px"; area.appendChild(zb);
-                let pos = 40;
-                let m = setInterval(() => {
-                    if(paused) return; pos += 7; zb.style.top = pos + "px";
-                    let pL = document.getElementById("player").offsetLeft;
-                    if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL+40) {
-                        clearInterval(m); zb.remove(); if(shieldHP>0) shieldHP--; else playerHP--; if(playerHP<=0) die(); updateHUD();
-                    } else if(pos > 360) { clearInterval(m); zb.remove(); }
-                }, 40);
-            }}, 2000);
-            setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000);
+            // Loop de tiro do Zumbi
+            setInterval(() => { 
+                if(!paused) {
+                    // Se for boss (onda 10, 20...), atira triplo
+                    if(wave % 10 === 0) {
+                        let target = document.getElementById("player").offsetLeft + 20;
+                        let diff = (target - (zGroup.offsetLeft + 25)) / 45;
+                        enemyFire(0, diff); // Tiro central que persegue
+                        enemyFire(-20, -2);  // Tiro esquerda
+                        enemyFire(20, 2);   // Tiro direita
+                    } else {
+                        enemyFire(); 
+                    }
+                }
+            }, (wave >= 6 && wave <= 9 ? 1400 : 2000));
+            
+            // Loop de invocação do Minion (Zumbizinho)
+            setInterval(() => { 
+                if(!paused && wave >= 5) spawnMinion(); 
+            }, 7000);
+
+            // Tiro do Pet (se tiver comprado)
+            setInterval(() => { 
+                if(!paused && petOwned) shootBullet(true); 
+            }, 5000);
         }
     </script>
 </body>
