@@ -18,13 +18,12 @@
         .sombrio-icon { display: inline-block; width: 16px; height: 16px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: inset 0 0 5px #000; }
         .sombrio-icon::after { content: 'S'; font-size: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #bbb; font-weight: bold; }
 
-        .trofeu-icon { display: inline-block; width: 18px; height: 18px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; }
+        .trofeu-icon { display: inline-block; width: 18px; height: 18px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: 0 0 5px #000; }
         .trofeu-icon::after { content: '🏆'; font-size: 10px; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); filter: grayscale(1); }
 
         .floating-reward { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #0f0; font-weight: bold; font-size: 22px; pointer-events: none; animation: floatUp 1.2s forwards; z-index: 100; display: flex; align-items: center; gap: 5px; }
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -150%); } }
 
-        /* Tiros e Inimigos */
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .disco-dexyz { background: #0ff; width: 18px; height: 6px; border-radius: 10px; box-shadow: 0 0 10px #0ff; }
         .sheze-bullet { background: #a0f; width: 4px; height: 10px; }
@@ -54,6 +53,7 @@
         #store, #skins-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
         .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
         .skin-card img { width: 35px; height: 35px; }
+        .skin-info { display: flex; flex-direction: column; align-items: flex-start; flex: 1; margin-left: 10px; text-align: left; }
         .focus-ball { background: #8e44ad; width: 16px; height: 16px; position: absolute; z-index: 3; border-radius: 50%; box-shadow: 0 0 10px #8e44ad; }
     </style>
 </head>
@@ -144,7 +144,8 @@
             const list = document.getElementById("skins-list"); list.innerHTML = "";
             SKINS.forEach(s => {
                 const isOwned = ownedSkins.includes(s.id);
-                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name}</span><small>🏆 ${trofeusMap[s.id]||0}</small></div>
+                const t = trofeusMap[s.id] || 0;
+                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name}</span><div style="display:flex; align-items:center; gap:5px; margin-top:3px;"><div class="trofeu-icon"></div><span>${t}</span></div></div>
                 <button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', ${s.price})`}">${isOwned ? 'USAR' : s.price + ' S'}</button></div>`;
             });
             document.getElementById('skins-menu').style.display='block';
@@ -266,92 +267,53 @@
             if(paused) return;
             const zb = document.createElement("div"); 
             zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
-            // TIRO PERSEGUIDOR A PARTIR DA ONDA 11
             if(wave >= 11 && Math.random() > 0.6) zb.classList.add("z-bullet-track");
-            
             zb.style.left = (zGroup.offsetLeft + 25) + "px"; area.appendChild(zb);
             let pos = 40, ang = 0;
             if(zb.classList.contains("z-bullet-track")) {
-                let target = document.getElementById("player").offsetLeft + 20;
+                                let target = document.getElementById("player").offsetLeft + 20;
                 ang = (target - parseInt(zb.style.left)) / 45;
             }
-            
-                        let m = setInterval(() => {
+            let m = setInterval(() => {
                 if(paused) return; 
                 pos += 7; 
                 zb.style.top = pos + "px"; 
                 zb.style.left = (parseFloat(zb.style.left) + ang) + "px";
-                
                 let pL = document.getElementById("player").offsetLeft;
-                
-                // Colisão com o jogador
                 if(pos >= 310 && pos <= 340 && parseInt(zb.style.left) >= pL && parseInt(zb.style.left) <= pL+40) {
-                    clearInterval(m); 
-                    zb.remove(); 
+                    clearInterval(m); zb.remove(); 
                     if(shieldHP > 0) shieldHP--; else playerHP--; 
-                    if(playerHP <= 0) die(); 
-                    updateHUD();
-                } else if(pos > 360) { 
-                    clearInterval(m); 
-                    zb.remove(); 
-                }
+                    if(playerHP <= 0) die(); updateHUD();
+                } else if(pos > 360) { clearInterval(m); zb.remove(); }
             }, 40);
         }
 
         function spawnMinion() {
             if(paused) return;
-            const m = document.createElement("div"); 
-            m.className = "minion";
-            m.style.left = (zGroup.offsetLeft + 20) + "px"; 
-            m.style.top = "60px"; 
-            area.appendChild(m);
-            
+            const m = document.createElement("div"); m.className = "minion";
+            m.style.left = (zGroup.offsetLeft + 20) + "px"; m.style.top = "60px"; area.appendChild(m);
             let pos = 60;
             let loop = setInterval(() => {
-                if(paused) return; 
-                pos += 5; 
-                m.style.top = pos + "px";
+                if(paused) return; pos += 5; m.style.top = pos + "px";
                 let pL = document.getElementById("player").offsetLeft;
-                
                 if(pos >= 310 && pos <= 345 && parseInt(m.style.left) >= pL && parseInt(m.style.left) <= pL+40) {
-                    clearInterval(loop); 
-                    m.remove(); 
-                    playerHP--; 
-                    if(playerHP <= 0) die(); 
-                    updateHUD();
-                } else if(pos > 360) { 
-                    clearInterval(loop); 
-                    m.remove(); 
-                }
+                    clearInterval(loop); m.remove(); playerHP--; if(playerHP <= 0) die(); updateHUD();
+                } else if(pos > 360) { clearInterval(loop); m.remove(); }
             }, 50);
         }
 
         function startLoops() {
-            // Loop de tiro do Zumbi
             setInterval(() => { 
                 if(!paused) {
-                    // Se for boss (onda 10, 20...), atira triplo
                     if(wave % 10 === 0) {
                         let target = document.getElementById("player").offsetLeft + 20;
                         let diff = (target - (zGroup.offsetLeft + 25)) / 45;
-                        enemyFire(0, diff); // Tiro central que persegue
-                        enemyFire(-20, -2);  // Tiro esquerda
-                        enemyFire(20, 2);   // Tiro direita
-                    } else {
-                        enemyFire(); 
-                    }
+                        enemyFire(0, diff); enemyFire(-20, -2); enemyFire(20, 2);
+                    } else { enemyFire(); }
                 }
             }, (wave >= 6 && wave <= 9 ? 1400 : 2000));
-            
-            // Loop de invocação do Minion (Zumbizinho)
-            setInterval(() => { 
-                if(!paused && wave >= 5) spawnMinion(); 
-            }, 7000);
-
-            // Tiro do Pet (se tiver comprado)
-            setInterval(() => { 
-                if(!paused && petOwned) shootBullet(true); 
-            }, 5000);
+            setInterval(() => { if(!paused && wave >= 5) spawnMinion(); }, 7000);
+            setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000);
         }
     </script>
 </body>
