@@ -17,13 +17,11 @@
 
         .sombrio-icon { display: inline-block; width: 16px; height: 16px; background: #444; border: 2px solid #777; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: inset 0 0 5px #000; }
         .sombrio-icon::after { content: 'S'; font-size: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #bbb; font-weight: bold; }
-        
-        /* NOVO: ÍCONE MELHORIA SOMBRIA */
-        .melhoria-icon { display: inline-block; width: 18px; height: 18px; background: #00008B; border: 2px solid #1E90FF; border-radius: 50%; vertical-align: middle; position: relative; color: white; font-size: 10px; font-weight: bold; line-height: 18px; box-shadow: 0 0 5px #000; }
 
         .trofeu-icon { display: inline-block; width: 18px; height: 18px; background: #555; border: 2px solid #888; border-radius: 50%; vertical-align: middle; position: relative; box-shadow: 0 0 5px #000; }
         .trofeu-icon::after { content: '🏆'; font-size: 10px; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); filter: grayscale(1); }
 
+        /* Estilo das Missões */
         #missions-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #f00; padding: 15px; z-index: 2600; width: 300px; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         .mission-card { background: #222; padding: 10px; margin: 8px 0; border-radius: 5px; border-left: 4px solid orange; text-align: left; }
         .mission-card.weekly { border-left-color: cyan; }
@@ -38,7 +36,7 @@
 
         .bullet { background: yellow; width: 6px; height: 12px; position: absolute; z-index: 3; border-radius: 2px; }
         .disco-dexyz { background: #0ff; width: 18px; height: 6px; border-radius: 10px; box-shadow: 0 0 10px #0ff; }
-        .sheze-bullet { background: #a0f; width: 4px; height: 10px; box-shadow: 0 0 8px #a0f; }
+        .sheze-bullet { background: #a0f; width: 4px; height: 10px; }
         .vrack-blackhole { background: #303; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #f0f; box-shadow: 0 0 15px #f0f; }
 
         #zombie-group { position: absolute; width: 60px; height: 80px; top: 10px; left: 120px; transition: left 0.3s ease-out, top 0.2s; display: flex; flex-direction: column; align-items: center; z-index: 4; }
@@ -63,24 +61,21 @@
         #super-bar-fill { height: 100%; width: 0%; background: cyan; }
         
         #store, #skins-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #fff; padding: 15px; z-index: 2500; width: 280px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
-        .skin-card { background: #1a1a1a; border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; }
-        .skin-card img { width: 35px; height: 35px; border-radius: 50%; }
+        .skin-card { border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
+        .skin-card img { width: 35px; height: 35px; }
         .skin-info { display: flex; flex-direction: column; align-items: flex-start; flex: 1; margin-left: 10px; text-align: left; }
-        .lvl-badge { background: #00008B; color: white; font-size: 10px; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-        .upgrade-btn { background: #00008B; color: white; border: 1px solid #1E90FF; padding: 4px 8px; border-radius: 4px; font-size: 10px; margin-top: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="main-menu" class="overlay">
         <h1 style="color:red">GUERREIRO DAS SOMBRAS</h1>
-        <div style="margin-bottom:10px; display: flex; justify-content: center; gap: 15px;">
+        <div style="margin-bottom:10px; display: flex; justify-content: center; gap: 20px;">
             <div><div class="sombrio-icon"></div> <span id="menu-sombrios">0</span></div>
-            <div><div class="melhoria-icon">Ⓜ️</div> <span id="menu-melhorias">0</span></div>
             <div><div class="trofeu-icon"></div> <span id="menu-poder-total">0</span></div>
         </div>
         <button class="menu-btn" onclick="startGame()">JOGAR</button>
-        <div style="display:flex; justify-content:center; width:250px; gap:10px;">
+        <div style="display:flex; justify-content:center; width:250px;">
              <button class="menu-btn" style="width:110px; font-size:12px; border-color:orange" onclick="openSkins()">SOMBRAS</button>
              <button class="menu-btn" style="width:110px; font-size:12px; border-color:cyan" onclick="openMissions()">📜 MISSÕES</button>
         </div>
@@ -96,7 +91,7 @@
 
     <div id="game-over" class="overlay hidden">
         <h1 style="color:red">GAME OVER</h1>
-        <div id="gain-stats" style="margin: 10px; color: #0f0; line-height: 1.6;"></div>
+        <div id="gain-stats" style="margin: 10px; color: #0f0;"></div>
         <button class="menu-btn" onclick="location.reload()">LOBBY</button>
     </div>
 
@@ -142,18 +137,16 @@
 
     <script>
         const SKINS = [
-            { id: "zark", name: "Zark", damageMult: 1, url: "https://i.ibb.co/WWhT8VPG/bico.jpg", baseHP: 10 },
-            { id: "dexyz", name: "Dexyz", damageMult: 1, url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnvh8TAdmT-ayeFiZZ8VoQYWtXSSE4rw4SnIzju8HP2SWsD-gIiVqsFe2D&s=10", baseHP: 12 },
-            { id: "sheze", name: "Sheze", damageMult: 1, url: "https://w7.pngwing.com/pngs/704/727/png-transparent-overwatch-sombra-pixel-art-widowmaker-cave-thumbnail.png", baseHP: 8 },
-            { id: "vrack", name: "Vrack", damageMult: 3, url: "https://w7.pngwing.com/pngs/341/329/png-transparent-overwatch-pixel-art-bead-pixel-gun-video-game-bead-fictional-character-thumbnail.png", baseHP: 15 }
+            { id: "zark", name: "Zark", damageMult: 1, url: "https://i.ibb.co/WWhT8VPG/bico.jpg" },
+            { id: "dexyz", name: "Dexyz", damageMult: 1, url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnvh8TAdmT-ayeFiZZ8VoQYWtXSSE4rw4SnIzju8HP2SWsD-gIiVqsFe2D&s=10" },
+            { id: "sheze", name: "Sheze", damageMult: 1, url: "https://w7.pngwing.com/pngs/704/727/png-transparent-overwatch-sombra-pixel-art-widowmaker-cave-thumbnail.png" },
+            { id: "vrack", name: "Vrack", damageMult: 3, url: "https://w7.pngwing.com/pngs/341/329/png-transparent-overwatch-pixel-art-bead-pixel-gun-video-game-bead-fictional-character-thumbnail.png" }
         ];
 
         let sombrios = parseInt(localStorage.getItem("gs_sombrios")) || 0;
-        let melhorias = parseInt(localStorage.getItem("gs_melhorias")) || 0;
         let trofeusMap = JSON.parse(localStorage.getItem("gs_trofeus")) || {zark:0, dexyz:0, sheze:0, vrack:0};
-        let lvlsMap = JSON.parse(localStorage.getItem("gs_lvls")) || {zark:1, dexyz:1, sheze:1, vrack:1};
-        let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_ids")) || ["zark"];
         let currentSkinId = localStorage.getItem("gs_current_id") || "zark";
+        let ownedSkins = JSON.parse(localStorage.getItem("gs_owned_ids")) || ["zark"];
         
         let missionData = JSON.parse(localStorage.getItem("gs_mission_data")) || {
             lastDay: "", lastWeek: 0,
@@ -164,11 +157,11 @@
             ],
             weekly: [
                 { id: "kill200", title: "Eliminar 200 Zumbis", goal: 200, progress: 0, reward: 25, collected: false },
-                { id: "wave25", title: "Chegar na Onda 25", goal: 25, reward: 30, collected: false }
+                { id: "wave25", title: "Chegar na Onda 25", goal: 25, progress: 0, reward: 30, collected: false }
             ]
         };
 
-        let coins=0, upgradeDanoLoja=0, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, playerHits=0, totalMelhoriasPartida=0;
+        let coins=0, upgradeDano=0, wave=1, playerHP=10, paused=true, shieldHP=0, zombieHP=5, zombieMaxHP=5, superCharge=0, canShoot=true, petOwned=false, playerHits=0;
 
         const pImg=document.getElementById("player-img"), zGroup=document.getElementById("zombie-group"), zombie=document.getElementById("zombie"), area=document.getElementById("game-area");
 
@@ -183,9 +176,35 @@
         }
         checkResets();
 
+        function updateMissionProgress(type, amount) {
+            if (type === "kill") { missionData.daily[0].progress = Math.min(missionData.daily[0].goal, missionData.daily[0].progress + amount); missionData.weekly[0].progress = Math.min(missionData.weekly[0].goal, missionData.weekly[0].progress + amount); }
+            if (type === "wave") { missionData.daily[1].progress = Math.max(missionData.daily[1].progress, amount); missionData.weekly[1].progress = Math.max(missionData.weekly[1].progress, amount); }
+            if (type === "super") { missionData.daily[2].progress = Math.min(missionData.daily[2].goal, missionData.daily[2].progress + amount); }
+            localStorage.setItem("gs_mission_data", JSON.stringify(missionData));
+        }
+
+        function openMissions() {
+            const dList = document.getElementById("daily-list"); const wList = document.getElementById("weekly-list");
+            dList.innerHTML = ""; wList.innerHTML = "";
+            missionData.daily.forEach((m, idx) => {
+                const perc = (m.progress / m.goal) * 100; const isReady = m.progress >= m.goal && !m.collected;
+                dList.innerHTML += `<div class="mission-card"><h4>${m.title}</h4><div class="progress-bar"><div class="progress-fill" style="width:${perc}%"></div></div><small>${m.progress}/${m.goal} | 🌑 ${m.reward}</small>${isReady ? `<button class="btn-collect" onclick="collectMission('daily', ${idx})">COLETAR</button>` : m.collected ? '<div style="color:gray;font-size:10px">COLETADO ✅</div>' : ''}</div>`;
+            });
+            missionData.weekly.forEach((m, idx) => {
+                const perc = (m.progress / m.goal) * 100; const isReady = m.progress >= m.goal && !m.collected;
+                wList.innerHTML += `<div class="mission-card weekly"><h4>${m.title}</h4><div class="progress-bar"><div class="progress-fill" style="width:${perc}%"></div></div><small>${m.progress}/${m.goal} | 🌑 ${m.reward}</small>${isReady ? `<button class="btn-collect" onclick="collectMission('weekly', ${idx})">COLETAR</button>` : m.collected ? '<div style="color:gray;font-size:10px">COLETADO ✅</div>' : ''}</div>`;
+            });
+            document.getElementById("missions-menu").style.display = "block";
+        }
+
+        function collectMission(type, idx) {
+            const m = missionData[type][idx]; sombrios += m.reward; m.collected = true;
+            localStorage.setItem("gs_sombrios", sombrios); localStorage.setItem("gs_mission_data", JSON.stringify(missionData));
+            updateMenuInfo(); openMissions();
+        }
+
         function updateMenuInfo() {
             document.getElementById("menu-sombrios").textContent = sombrios;
-            document.getElementById("menu-melhorias").textContent = melhorias;
             document.getElementById("menu-poder-total").textContent = Object.values(trofeusMap).reduce((a, b) => a + b, 0);
             pImg.src = SKINS.find(s => s.id === currentSkinId).url;
         }
@@ -195,43 +214,26 @@
             const list = document.getElementById("skins-list"); list.innerHTML = "";
             SKINS.forEach(s => {
                 const isOwned = ownedSkins.includes(s.id);
-                const lvl = lvlsMap[s.id] || 1;
-                const costM = lvl * 20, costS = lvl * 10;
-                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name} <span class="lvl-badge">P${lvl}</span></span><div style="display:flex; align-items:center; gap:5px;"><div class="trofeu-icon"></div><span>${trofeusMap[s.id]||0}</span></div>${isOwned && lvl < 11 ? `<button class="upgrade-btn" onclick="upgradeBrawler('${s.id}',${costM},${costS})">UP:Ⓜ️${costM} 🌑${costS}</button>` : ''}</div><button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', 50)`}">${isOwned ? 'USAR' : '50 S'}</button></div>`;
+                list.innerHTML += `<div class="skin-card"><img src="${s.url}"><div class="skin-info"><span>${s.name}</span><div style="display:flex; align-items:center; gap:5px; margin-top:3px;"><div class="trofeu-icon"></div><span>${trofeusMap[s.id]||0}</span></div></div><button onclick="${isOwned ? `selectSkin('${s.id}')` : `buySkin('${s.id}', ${s.price})`}">${isOwned ? 'USAR' : s.price + ' S'}</button></div>`;
             });
             document.getElementById('skins-menu').style.display='block';
         }
 
-        function upgradeBrawler(id, cm, cs) {
-            if(melhorias >= cm && sombrios >= cs) {
-                melhorias -= cm; sombrios -= cs; lvlsMap[id]++;
-                localStorage.setItem("gs_melhorias", melhorias); localStorage.setItem("gs_sombrios", sombrios); localStorage.setItem("gs_lvls", JSON.stringify(lvlsMap));
-                updateMenuInfo(); openSkins();
-            }
-        }
-
         function buySkin(id, price) { if(sombrios >= price) { sombrios -= price; ownedSkins.push(id); localStorage.setItem("gs_sombrios", sombrios); localStorage.setItem("gs_owned_ids", JSON.stringify(ownedSkins)); updateMenuInfo(); openSkins(); } }
         function selectSkin(id) { currentSkinId = id; localStorage.setItem("gs_current_id", id); updateMenuInfo(); document.getElementById('skins-menu').style.display='none'; }
-        
-        function startGame() { 
-            paused=false; canShoot=true; totalMelhoriasPartida=0;
-            document.getElementById("main-menu").classList.add("hidden"); 
-            const s = SKINS.find(x => x.id === currentSkinId);
-            playerHP = Math.round(s.baseHP * (1 + (lvlsMap[currentSkinId]-1)*0.2));
-            resetEnemy(); startLoops(); 
-        }
+        function startGame() { paused=false; document.getElementById("main-menu").classList.add("hidden"); resetEnemy(); startLoops(); }
+        function togglePause() { paused = !paused; document.getElementById("attack-button").innerText = paused ? "⏸️ PAUSADO" : "🔥 ATACAR"; }
 
         function getRealDamage() {
-            const skin = SKINS.find(s => s.id === currentSkinId);
-            const lvlBonus = lvlsMap[currentSkinId] - 1;
-            if(currentSkinId === "dexyz") return 1 + upgradeDanoLoja + Math.floor(lvlBonus/2);
-            return skin.damageMult + upgradeDanoLoja + lvlBonus;
+            if(currentSkinId === "dexyz") return 1; // 1 de dano por bala (2 balas no total)
+            let base = (currentSkinId === "vrack") ? 3 : 1;
+            return base + upgradeDano;
         }
 
         function updateHUD() {
             document.getElementById("vida").textContent = playerHP; document.getElementById("coins-display").textContent = coins;
             document.getElementById("wave").textContent = wave; 
-            document.getElementById("damage-display").textContent = (currentSkinId === "dexyz") ? (getRealDamage()*2) : getRealDamage();
+            document.getElementById("damage-display").textContent = (currentSkinId === "dexyz") ? 2 : getRealDamage();
             document.getElementById("super-bar-fill").style.width = superCharge + "%";
             document.getElementById("enemyHPFill").style.width = (zombieHP/zombieMaxHP)*100 + "%";
             document.getElementById("enemyHPText").textContent = Math.ceil(zombieHP) + " HP";
@@ -247,14 +249,25 @@
             zombieHP = zombieMaxHP; zGroup.style.left = "120px"; playerHits = 0; updateHUD();
         }
 
+        function showRewardEffect() {
+            const r = document.createElement("div"); r.className = "floating-reward"; r.innerHTML = `+5 <div class="sombrio-icon"></div>`;
+            area.appendChild(r); setTimeout(() => r.remove(), 1200);
+        }
+
         function shootBullet(isSuper=false, off=0, angle=0, customDmg=null, isMeteor=false) {
             if(paused || (!isSuper && !canShoot)) return;
             if(!isSuper) { 
                 canShoot = false; 
                 setTimeout(() => canShoot = true, (currentSkinId === "vrack" ? 1500 : 500)); 
                 if(currentSkinId === "dexyz") { shootBullet(true, -12); shootBullet(true, 12); return; }
-                if(currentSkinId === "sheze") { shootBullet(true, 0); setTimeout(()=>shootBullet(true,0),100); setTimeout(()=>shootBullet(true,0),200); return; }
+                if(currentSkinId === "sheze") { 
+                    shootBullet(true, 0); 
+                    setTimeout(()=>shootBullet(true,0),100); 
+                    setTimeout(()=>shootBullet(true,0),200); 
+                    return; 
+                }
             }
+
             const b = document.createElement("div"); b.className = "bullet";
             if(currentSkinId === "dexyz") b.classList.add("disco-dexyz");
             if(currentSkinId === "sheze") b.classList.add("sheze-bullet");
@@ -266,17 +279,15 @@
             let m = setInterval(() => {
                 if(paused) return;
                 let top = parseInt(b.style.top), left = parseInt(b.style.left);
-                let zL = zGroup.offsetLeft;
-                if(top <= 60 && top >= 10 && left >= zL - 5 && left <= zL + 50) {
+                let zL = zGroup.offsetLeft, zSize = zombie.offsetWidth;
+                if(top <= 60 && top >= 10 && left >= zL - 5 && left <= zL + zSize + 5) {
                     clearInterval(m); b.remove();
                     zombieHP -= (customDmg || getRealDamage());
                     zombie.classList.add("z-hit"); setTimeout(() => zombie.classList.remove("z-hit"), 100);
+                    if(zombieHP/zombieMaxHP < 0.2) zombie.classList.add("z-smoke");
+                    playerHits++; if(playerHits >= (wave>=6&&wave<=9?2:3)) { zGroup.style.left = Math.random()*240+"px"; playerHits=0; }
                     superCharge = Math.min(100, superCharge + 5);
-                    if(zombieHP <= 0) { 
-                        wave++; coins += 10; sombrios += 5; 
-                        if(wave % 2 === 0) totalMelhoriasPartida++; 
-                        updateMissionProgress("kill", 1); resetEnemy(); 
-                    }
+                    if(zombieHP <= 0) { wave++; coins+=10; sombrios+=5; updateMissionProgress("kill", 1); updateMissionProgress("wave", wave); showRewardEffect(); resetEnemy(); }
                     updateHUD();
                 } else if(top < -50 || top > 400) { clearInterval(m); b.remove(); }
                 else { b.style.top = (top + (isMeteor ? 8 : -12)) + "px"; b.style.left = (left + angle) + "px"; }
@@ -286,29 +297,29 @@
         function activateSuper() {
             if(superCharge < 100 || paused) return;
             superCharge = 0; updateMissionProgress("super", 1);
-            if(currentSkinId === "vrack") { for(let i=0; i<4; i++) setTimeout(() => shootBullet(true, 0, 0, getRealDamage()*10, true), i*300); }
+            if(currentSkinId === "vrack") { for(let i=0; i<4; i++) setTimeout(() => shootBullet(true, 0, 0, (3 + upgradeDano)*10, true), i*300); }
             else if(currentSkinId === "dexyz") { for(let i=-18; i<=18; i+=4) shootBullet(true, 0, i); }
-            else if(currentSkinId === "sheze") { zombieHP -= (getRealDamage() * 8); updateHUD(); }
+            else if(currentSkinId === "sheze") { zombieHP -= ((1 + upgradeDano) * 8); updateHUD(); }
             else { for(let i=-60; i<=60; i+=20) shootBullet(true, i); }
             updateHUD();
         }
 
         function move(d) { if(!paused) { let cur = document.getElementById("player").offsetLeft; document.getElementById("player").style.left = (d==='L' ? Math.max(0,cur-30) : Math.min(260,cur+30))+"px"; updateHUD(); } }
-        function buyUpgrade(t) { let cost = (t==='dmg'?10:15); if(coins>=cost) { coins-=cost; if(t==='dmg') upgradeDanoLoja++; else playerHP+=5; updateHUD(); } }
+        function buyUpgrade(t) { let cost = (t==='dmg'?10:15); if(coins>=cost) { coins-=cost; if(t==='dmg') upgradeDano++; else playerHP+=5; updateHUD(); } }
         function buyItem(t) { if(t==='shield' && coins>=20) { coins-=20; shieldHP=5; } if(t==='pet' && coins>=150) { petOwned=true; } updateHUD(); }
 
         function die() {
-            paused=true; let ganhou = (wave >= 11 ? 10 : 2);
+            paused=true;
+            let ganhou = (wave >= 21 ? 20 : wave >= 11 ? 10 : wave >= 6 ? 5 : 2);
             trofeusMap[currentSkinId] = (trofeusMap[currentSkinId] || 0) + ganhou;
-            melhorias += totalMelhoriasPartida;
             localStorage.setItem("gs_trofeus", JSON.stringify(trofeusMap));
-            localStorage.setItem("gs_melhorias", melhorias);
             localStorage.setItem("gs_sombrios", sombrios);
-            document.getElementById("gain-stats").innerHTML = `+${totalMelhoriasPartida} Ⓜ️ Melhorias<br>+${ganhou} 🏆 Poder Sombrio`;
+            document.getElementById("gain-stats").innerHTML = `+${ganhou} <div class="trofeu-icon"></div> Poder Sombrio!`;
             document.getElementById("game-over").classList.remove("hidden");
         }
 
         function enemyFire(off=0, ang=0) {
+            if(paused) return;
             const zb = document.createElement("div"); zb.style.cssText="position:absolute;width:10px;height:10px;background:orange;border-radius:50%;top:40px;";
             if(wave >= 11 && Math.random() > 0.6) zb.classList.add("z-bullet-track");
             zb.style.left = (zGroup.offsetLeft + 25 + off) + "px"; area.appendChild(zb);
@@ -316,19 +327,32 @@
             if(zb.classList.contains("z-bullet-track")) { let t = document.getElementById("player").offsetLeft + 20; angle = (t - parseFloat(zb.style.left)) / 45; }
             let m = setInterval(() => {
                 if(paused) return; pos += 7; zb.style.top = pos + "px"; zb.style.left = (parseFloat(zb.style.left) + angle) + "px";
-                if(pos >= 310 && pos <= 340 && parseFloat(zb.style.left) >= document.getElementById("player").offsetLeft && parseFloat(zb.style.left) <= document.getElementById("player").offsetLeft+40) {
+                let pL = document.getElementById("player").offsetLeft;
+                if(pos >= 310 && pos <= 340 && parseFloat(zb.style.left) >= pL && parseFloat(zb.style.left) <= pL+40) {
                     clearInterval(m); zb.remove(); if(shieldHP>0) shieldHP--; else playerHP--; if(playerHP<=0) die(); updateHUD();
                 } else if(pos > 360) { clearInterval(m); zb.remove(); }
             }, 40);
         }
 
-        function startLoops() {
-            setInterval(() => { if(!paused) { if(wave % 10 === 0) { let t = document.getElementById("player").offsetLeft+20; let d = (t-(zGroup.offsetLeft+25))/45; enemyFire(0, d); enemyFire(-20,-2); enemyFire(20,2); } else enemyFire(); }}, 2000);
-            setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000);
+        function spawnMinion() {
+            if(paused) return;
+            const m = document.createElement("div"); m.className = "minion";
+            m.style.left = (zGroup.offsetLeft + 20) + "px"; m.style.top = "60px"; area.appendChild(m);
+            let pos = 60;
+            let loop = setInterval(() => {
+                if(paused) return; pos += 5; m.style.top = pos + "px";
+                let pL = document.getElementById("player").offsetLeft;
+                if(pos >= 310 && pos <= 345 && parseInt(m.style.left) >= pL && parseInt(m.style.left) <= pL+40) {
+                    clearInterval(loop); m.remove(); if(shieldHP>0) shieldHP--; else playerHP--; if(playerHP<=0) die(); updateHUD();
+                } else if(pos > 360) { clearInterval(loop); m.remove(); }
+            }, 50);
         }
 
-        function updateMissionProgress(t, a) { if(t==="kill") missionData.daily[0].progress = Math.min(20, missionData.daily[0].progress+a); localStorage.setItem("gs_mission_data", JSON.stringify(missionData)); }
-        function openMissions() { document.getElementById("missions-menu").style.display="block"; }
+        function startLoops() {
+            setInterval(() => { if(!paused) { if(wave % 10 === 0) { let t = document.getElementById("player").offsetLeft+20; let d = (t-(zGroup.offsetLeft+25))/45; enemyFire(0, d); enemyFire(-20,-2); enemyFire(20,2); } else enemyFire(); }}, (wave >= 6 && wave <= 9 ? 1400 : 2000));
+            setInterval(() => { if(!paused && wave >= 5) spawnMinion(); }, 7000);
+            setInterval(() => { if(!paused && petOwned) shootBullet(true); }, 5000);
+        }
     </script>
 </body>
 </html>
